@@ -17,33 +17,34 @@ kpss_test <- kpss.test(stock_data$Open, null = "Trend")
 print(kpss_test)
 # since p value is less than 0.05, we cannot rejec we'll difference the data to make it strationary
 # # Arima(ts_stock_data, order = c(1,1,1)
-differenced_stock_data_open <- diff(ts_stock_data)
-differenced_stock_data_open <- na.omit(differenced_stock_data_open)
-plot(differenced_stock_data_open)
+# differenced_stock_data_open <- diff(ts_stock_data)
+ts_stock_data <- ts_stock_data
+ts_stock_data <- na.omit(ts_stock_data)
+plot(ts_stock_data)
 
 
-kpss_test <- kpss.test(differenced_stock_data_open, null = "Trend")
+kpss_test <- kpss.test(ts_stock_data, null = "Trend")
 print(kpss_test)
 # After differencing, p_value is 0.1 > 0.01, which means we don't  need to difference the data again
 
 # ACF Plot
-Acf(differenced_stock_data_open, lag.max = 20, main = "ACF for Differenced Data",
+Acf(ts_stock_data, lag.max = 20, main = "ACF for Differenced Data",
     col = "blue", lwd = 2)
 
-Pacf(differenced_stock_data_open, lag.max = 20, main = "PACF for Differenced Data",
+Pacf(ts_stock_data, lag.max = 20, main = "PACF for Differenced Data",
      col = "green", lwd = 2)
 
 # Now, let's fit various ARIMA models to our data.
 
 model_list <- list()
-max_p <- 4
-max_q <- 4
+max_p <- 1
+max_q <- 1
 for (p in 0:max_p)
 {
   for (q in 0:max_q)
   {
   # model_names <- paste0("ARIMA_", p, "_1_", q)
-  model_list[[paste0("ARIMA_", p, "_1_", q)]] <- Arima(differenced_stock_data_open, order = c(p,1,q))
+  model_list[[paste0("ARIMA_", p, "_1_", q)]] <- Arima(ts_stock_data, order = c(p, 1, q))
     # model_names <- array(model_names)
 }
   }
@@ -77,9 +78,21 @@ for (index in seq_along(model_list))
 #     break
 #   }
 # }
-model_names[index_of_least_aic]
-print(model_list[model_names[index_of_least_aic]])
+# print(paste("Best model is:", model_names[index_of_least_aic]))
+print(( model_list[model_names[index_of_least_aic]]))
 best_fit <- model_list[model_names[index_of_least_aic]]
-residuals_best <- best_fit$ARIMA_0_1_1$residuals
+best_fit_test <- model_list[model_names[index_of_least_aic]]
+
+best_fit <- best_fit[[1]]
+residuals_best <- best_fit$residuals
 checkresiduals(residuals_best)
-autoplot(forecast(best_fit$ARIMA_0_1_1))
+autoplot(best_fit)
+autoplot(forecast(best_fit))
+
+auto_arima_model <- auto.arima(ts_stock_data, allowdrift = TRUE )
+autoplot(forecast(auto_arima_model))
+autoplot(auto_arima_model)
+print(paste('auto_arima chosen model',auto_arima_model, auto_arima_model$aicc))
+
+print(paste('my manually chosen arima', best_fit, best_fit$aicc))
+
