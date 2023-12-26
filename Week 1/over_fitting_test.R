@@ -12,8 +12,10 @@ stock_data <- stock_data[order(as.Date(stock_data$Date)),]
 stock_data$daily_returns <- c(0.015770969 , diff(stock_data$Adj.Close) / head(stock_data$Adj.Close,-1))
 training_set_size <- floor(0.8211 * length(stock_data$daily_returns))
 training_set <- stock_data$daily_returns[1:training_set_size]
+plot(training_set, type = "l", main = "Training Set", xlab = "Index", ylab = "Daily Returns")
 # //First element of training set maybe incorrect
 testing_set <- stock_data$daily_returns[(training_set_size + 1):length(stock_data$daily_returns)]
+plot(testing_set, type = "l", main = "Testing Set", xlab = "Index", ylab = "Daily Returns")
 detect_significant_lags_acf <- function(time_series, lag.max = NULL, confidence_level = 0.95) {
   N <- length(na.omit(time_series)) # Effective sample size
   acf_values <- acf(time_series, lag.max = lag.max, plot = TRUE, main = "ACF for Training Set")
@@ -73,21 +75,21 @@ adf_result <- adf.test(training_set, alternative = "stationary")
 # print(adf_result)
 
 # //manual adf test
-manual_adf_test <- function(time_series)
-{
-	manual_adf_data <- data.frame(training_set = time_series)
-	manual_adf_data$lagged_series <- stats::lag(manual_adf_data$training_set, -1)
-	manual_adf_data$diff_series <- c(NA,diff(manual_adf_data$training_set, differences = 1))
-	manual_adf_data$diff_lag1 <- stats::lag(manual_adf_data$diff_series, -1)
-	manual_adf_data <- na.omit(manual_adf_data)
-	manual_adf_model <- lm(diff_series ~ lagged_series - 1, data = manual_adf_data)
-	summary(manual_adf_model)
-}
+# manual_adf_test <- function(time_series)
+# {
+# 	manual_adf_data <- data.frame(training_set = time_series)
+# 	manual_adf_data$lagged_series <- stats::lag(manual_adf_data$training_set, -1)
+# 	manual_adf_data$diff_series <- c(NA,diff(manual_adf_data$training_set, differences = 1))
+# 	manual_adf_data$diff_lag1 <- stats::lag(manual_adf_data$diff_series, -1)
+# 	manual_adf_data <- na.omit(manual_adf_data)
+# 	manual_adf_model <- lm(diff_series ~ lagged_series - 1, data = manual_adf_data)
+# 	summary(manual_adf_model)
+# }
 # adf_test_result <- manual_adf_test(training_set)
 # print(adf_test_result)
 # ers_test_result <- ur.ers(training_set, type = "DF-GLS", model = "constant", lag.max = 10)
 # summary(ers_test_result)
-optimal_arima <- auto.arima(training_set, stepwise = FALSE, approximation = FALSE, trace = TRUE)
+optimal_arima <- auto.arima(training_set, stepwise = FALSE, approximation = FALSE, trace = TRUE,  ic = "aicc")
 # Find out how to check for autoarima
 summary_optimal_arima <- summary(optimal_arima)
 # Extract the variance-covariance matrix
@@ -100,24 +102,26 @@ standard_errors <- optimal_arima$std_errors
 # Print the standard errors
 # print(paste("standard errors are:", std_errors))
 t_statistics <- coefficients / standard_errors
-p_values <- 2 * (1 - pt(abs(t_statistics), df = length(testing_set) - length(coefficients)))
-p_values
+p_values <- 2 * (1 - pt(abs(t_statistics), df = length(training_set) - length(coefficients)))
+print(paste("p_vals of traning set: ", p_values))
 
+adf_result_testing <- adf.test(training_set, alternative = "stationary")
+print(adf_result_testing)
 #  Now, let's check for overfitting:
-overfit_one <- arima(x = testing_set, order= c(2,0,4))
+overfit_one <- arima(testing_set, order= c(2,0,3))
 var_coef_matrix <- overfit_one$var.coef
 overfit_one$std_errors <- array(sqrt(diag(var_coef_matrix)))
 
 overfit_coef <- overfit_one$coef
-print(paste("coeff", overfit_coef))
+# print(paste("coeff", overfit_coef))
 # overfit_coef <- 0.2487
 standard_errors <- overfit_one$std_errors
-print(paste("errors", standard_errors))
+# print(paste("errors", standard_errors))
 # standard_errors <- 0.1067
 t_stats_overfit <- overfit_coef / standard_errors
-print(paste("t_stats", t_stats_overfit))
+# print(paste("t_stats", t_stats_overfit))
 p_val_overfit <-  2*(1 - pt(abs(t_stats_overfit), df = length(testing_set)-length(overfit_coef)))
-p_val_overfit
+print(paste("p_vals for testing set", p_val_overfit))
 # Now, let's minize the sum of p values of residuls. SW-test, LBQtest and t-test
 #sw-test
 
