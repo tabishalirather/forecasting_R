@@ -208,7 +208,7 @@ run_parallel_accuracy_test <- function()
 
   # log_message(paste("Detailed Results:", ((comparison_results_pll))), log_file)
   # log_message("Performing accuracy test in parallel end data.....", log_file)
-  log_message("---------------------------------------------------------------------------------", log_file)
+  log_message("-------------------------------------------------------------------------------", log_file)
 
 }
 run_parallel_accuracy_test()
