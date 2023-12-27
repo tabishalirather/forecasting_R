@@ -9,6 +9,7 @@ library(progress)
 # define global variables
 NUM_TESTS <- 10
 NUM_OBSERVATIONS <- 1000
+IC <- "aicc"  # Can be "aic", "aicc", "bic" or "hqic"
 # Define the base seed for reproducibility as a random number.
 BASE_SEED <- as.integer(Sys.time())
 print(paste("BASE_SEED:", BASE_SEED))
@@ -88,14 +89,6 @@ test_arima_accuracy <- function(num_tests, max_p, max_d, max_q, num_observations
     actual_orders[[i]] <- actual_arima_order
     chosen_orders[[i]] <- chosen_arima_order
     comparison_results[[i]] <- list(actual_order = actual_arima_order, chosen_order = chosen_arima_order)
-
-
-    # if (identical(actual_arima_order, chosen_arima_order)) {
-    #   true_postive_count <- true_postive_count + 1
-    # }
-
-  # return(list(actual_order = actual_orders, chosen_order = chosen_orders))
-
   }
  true_positive_count <- sum(mapply(identical, actual_orders, chosen_orders))
   # print(true_positive_count)
@@ -139,7 +132,6 @@ test_arima_accuracy_parallel <- function(num_tests, max_p, max_d, max_q, num_obs
 {
   results<- foreach(i = 1:num_tests, .packages = c("forecast", "astsa")) %dopar%
   {
-    print(as.integer(Sys.time())/1000)
     iter_seed <- BASE_SEED + i
     model_and_data <- generate_random_arima(max_p, max_d, max_q, num_observations, iter_seed)
     actual_arima_order <- model_and_data[[2]]$order
@@ -171,44 +163,35 @@ log_message <- function(message, filepath) {
 run_parallel_accuracy_test <- function()
 {
   log_file <- "C:/Users/tabis/OneDrive - Swinburne University/Summer Project 2023/TestingR/Week 1+/accuracy_test_results.txt"  # Define the log file name
-  log_message("Performing accuracy test in parallel start data.....", log_file)
-  log_message("---------------------------------------------------------------------------------", log_file)
   print("Performing accuracy test in parallel.....")
   start_time <- Sys.time()
-  result_pll <- test_arima_accuracy_parallel(num_tests = NUM_TESTS, max_p = 3, max_d = 1, max_q = 3, num_observations = NUM_OBSERVATIONS, ic = "bic")
+  result_pll <- test_arima_accuracy_parallel(num_tests = NUM_TESTS, max_p = 3, max_d = 1, max_q = 3, num_observations = NUM_OBSERVATIONS, ic = IC)
   end_time <- Sys.time()
   time_taken_parallel <- as.numeric(end_time - start_time, units = "secs")
   stopCluster(from_initiate_parallel_processing$cl)
 
-  accuracy_msg <- paste0(result_pll$accuracy_percentage, "% of the time, auto.arima chose the correct order")
-  time_msg <- paste0("Time taken to test in parallel: ", time_taken_parallel)
-  true_count_msg <- paste0(result_pll$true_positive_count, " out of ", NUM_TESTS, " tests were successful")
-  log_message(accuracy_msg, log_file)
-  log_message(time_msg, log_file)
-  log_message(true_count_msg, log_file)
+  accuracy_decimal <- result_pll$accuracy_percentage / 100
+  num_observations <- NUM_OBSERVATIONS
+  num_tests <- NUM_TESTS
+  ic_used <- IC
+
+  # Create a data frame to store the results
+  results_df <- data.frame(
+    accuracy = accuracy_decimal,
+    num_observations = num_observations,
+    num_tests = num_tests,
+    ic_used = ic_used,
+    stringsAsFactors = FALSE
+  )
+
+  # Write the results to the log file
+  write.table(results_df, file = log_file, append = TRUE, row.names = FALSE, sep = " | ")
 
   print(paste0(result_pll$accuracy_percentage, "% of the time, auto.arima chose the correct order"))
   print(paste0(result_pll$true_positive_count, " out of ", NUM_TESTS, " tests were successful"))
   print(paste0("Time taken to test in parallel: ", time_taken_parallel))
   comparison_results_pll <<- result_pll$comparison_results_pll
-
-     # Extracting actual and chosen orders and creating a data frame
-  actual_orders <- lapply(comparison_results_pll, function(x) paste(x$actual_order, collapse = ","))
-  chosen_orders <- lapply(comparison_results_pll, function(x) paste(x$chosen_order, collapse = ","))
-  detailed_results_df <- data.frame(
-    actual = unlist(actual_orders),
-    chosen = unlist(chosen_orders),
-    comparison = mapply(function(a, c) ifelse(a == c, "T", "F"), unlist(actual_orders), unlist(chosen_orders)),
-    stringsAsFactors = FALSE
-  )
-
-  # Log the formatted detailed results
-  log_message("Detailed Results:", log_file)
-  write.table(detailed_results_df, file = log_file, append = TRUE, row.names = FALSE, sep = " | ")
-
-  # log_message(paste("Detailed Results:", ((comparison_results_pll))), log_file)
-  # log_message("Performing accuracy test in parallel end data.....", log_file)
-  log_message("-------------------------------------------------------------------------------", log_file)
-
 }
 run_parallel_accuracy_test()
+# TODO: Compare the the results of this functions for different ics
+# TODO: now use the test to compare the accuracy of manual auto.arima with different number of observations

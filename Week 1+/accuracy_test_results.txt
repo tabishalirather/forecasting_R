@@ -1,0 +1,4 @@
+"accuracy" | "num_observations" | "num_tests" | "ic_used"
+0.5 | 1000 | 10 | "aic"
+"accuracy" | "num_observations" | "num_tests" | "ic_used"
+0.6 | 1000 | 10 | "aicc"
