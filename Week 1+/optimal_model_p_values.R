@@ -3,14 +3,12 @@ library(dplyr)
 library(urca)
 library(forecast)
 library(ggplot2)
-library(dplyr)
 library(parallel)
 rm(list = ls())
 
 NUM_OBSERVATIONS <- 300
 # Fxn to geneate random ARIMA data and model
 generate_random_arima <- function(max_p, max_d, max_q, num_observations, seed = NULL) {
-
   # Setting a seed for reproducibility (optional, can be removed or modified)
   if(!is.null(seed)){
     print(seed)
