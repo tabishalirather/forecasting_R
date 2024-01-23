@@ -169,95 +169,6 @@ perform_ts_cross_validation <- function(random_arima_data, fitted_model, initial
   return(average_errors)
 }
 
-
-run_arima_analysis <- function(random_arima_data) {
-  # model_list_for_plotting <<- list()
-  # num_observations <- 400
-  # Generate random ARIMA data and model
-  if (is.null(random_arima_data[[1]])) {
-    stop("ARIMA data generation failed.")
-  }
-  # Fit ARIMA models
-  model_list <- fit_arima_models(random_arima_data, max_p = 3, max_q = 3)
-  # Find best models based on different criteria
-  best_model_least_p <- find_best_model_max_p(model_list)$best_model
-  best_model_auto_arima <- auto.arima(random_arima_data, allowdrift = TRUE, approximation = FALSE, stepwise = FALSE)
-
-  # Analyze models
-  # models_analysis_least_p <- analyse_significant_parameters(best_model_least_p, significance_level = 0.05)
-  # models_analysis_auto_arima <- analyse_significant_parameters(best_model_auto_arima, significance_level = 0.05)
-
-  # Split data and forecast
-  split <- split_data(random_arima_data)
-  forecast_least_p <- forecast::forecast(best_model_least_p, length(split$test))
-  print("forecast_tes working")
-  forecast_auto_arima <- forecast::forecast(best_model_auto_arima, length(split$test))
-
-
-  # Perform cross-validation
-  # average_errors_least_p <- perform_ts_cross_validation(random_arima_data, best_model_least_p)
-  # average_errors_auto_arima <- perform_ts_cross_validation(random_arima_data, best_model_auto_arima)
-
-  # Evaluate performance
-  performance_least_p <- evaluate_performance(split$test, forecast_least_p$mean)
-  performance_auto_arima <- evaluate_performance(split$test, forecast_auto_arima$mean)
-
-  model_list_for_plotting <<- list(
-    "Least p-value Model" = list(
-      # model = best_model_least_p,
-      # overfit_analysis = models_analysis_least_p,
-      # cross_validation_errors = average_errors_least_p,
-      forecast = forecast_least_p,
-      performance = performance_least_p
-    ),
-    "Auto.arima Model" = list(
-      # model = best_model_auto_arima,
-      # overfit_analysis = models_analysis_auto_arima,
-      # cross_validation_errors = average_errors_auto_arima,
-      forecast = forecast_auto_arima,
-      performance = performance_auto_arima
-    )
-
-  )
-}
-
-
-# Function to rank models based on chosen RMSE type or both
-# rank_models_rmse <- function(analysis, use_rmse_type = "cv") {
-#   model_names <- names(analysis)
-#   # Initialize an empty data frame
-#   rmse_df <- data.frame(Model = model_names)
-#   # Choose which RMSE to use based on the use_rmse_type
-#   if (use_rmse_type == "cv" || use_rmse_type == "both") {
-#     # Use RMSE from cross-validation
-#     rmse_values_cv <- sapply(analysis, function(x) x$cross_validation_errors[[2]])
-#     rmse_df$RMSE_CV <- rmse_values_cv
-#   }
-#   if (use_rmse_type == "ep" || use_rmse_type == "both") {
-#     # Use RMSE from evaluate_performance
-#     rmse_values_ep <- sapply(analysis, function(x) x$performance$RMSE)
-#     rmse_df$RMSE_EP <- rmse_values_ep
-#   }
-#
-#   # Ranking the models based on chosen RMSE type(s)
-#   if (use_rmse_type == "cv") {
-#     rmse_df <- rmse_df %>%
-#       arrange(RMSE_CV) %>%
-#       mutate(Rank_CV = dense_rank(RMSE_CV))
-#   } else if (use_rmse_type == "ep") {
-#     rmse_df <- rmse_df %>%
-#       arrange(RMSE_EP) %>%
-#       mutate(Rank_EP = dense_rank(RMSE_EP))
-#   } else if (use_rmse_type == "both") {
-#     rmse_df <- rmse_df %>%
-#       arrange(RMSE_CV, RMSE_EP) %>%
-#       mutate(Rank_CV = dense_rank(RMSE_CV),
-#              Rank_EP = dense_rank(RMSE_EP))
-#   }
-#   return(rmse_df)
-# }
-
-
 refit_least_p_model <- function (order_comparison) {
   new_rmse_vals <- list()
   refitted_model_analysis_least_p <- list()
@@ -319,10 +230,14 @@ refit_auto_arima_model <- function (order_comparison) {
   return(list(avg_new_rms_vals_auto_arima, refitted_model_analysis_auto_arima))
 }
 
+# Let's break down compare arima order into smaller, modular functions.
 
-compare_arima_order <- function (random_arima_data_for_testing)
+
+
+
+get_info_about_models <- function (random_arima_data_for_testing)
 {
-  model_list <- fit_arima_models(random_arima_data_for_testing, max_p = 3, max_q = 3)
+  model_list <- fit_arima_models(random_arima_data_for_testing, max_p = MAX_P, max_q = MAX_D)
 
   least_p_model <- find_best_model_max_p(model_list)
   auto_arima_model <- auto.arima(random_arima_data_for_testing, allowdrift = TRUE, approximation = FALSE, stepwise = FALSE )
@@ -340,9 +255,14 @@ compare_arima_order <- function (random_arima_data_for_testing)
 
   # Run the analysis once and store the result
   # arima_analysis_result <- run_arima_analysis(random_arima_data_for_testing)
-
+  split <- split_data(random_arima_data_for_testing)
+  forecast_least_p <- forecast::forecast(least_p_model$best_model_min_p, length(split$test))
+  print("forecast_tes working")
+  forecast_auto_arima <- forecast::forecast(auto_arima_model, length(split$test))
   # Extract the count of insignificant parameters for both models
   # count_insig_params_p_model <- arima_analysis_result$`Least p-value Model`$overfit_analysis$count_less_significant_parameters
+  performance_least_p <- evaluate_performance(split$test, forecast_least_p$mean)
+  performance_auto_arima <- evaluate_performance(split$test,forecast_auto_arima$mean)
 
   count_insig_params_p_model <- models_analysis_least_p$count_less_significant_parameters
 
@@ -367,14 +287,23 @@ compare_arima_order <- function (random_arima_data_for_testing)
     auto_arima_model = auto_arima_model,
 
     models_analysis_least_p = models_analysis_least_p,
-    models_analysis_auto_arima = models_analysis_auto_arima
+    models_analysis_auto_arima = models_analysis_auto_arima,
+
+    performance_least_p = performance_least_p,
+    performance_auto_arima = performance_auto_arima
   )
   # }
   return(comparison_results)
 
 }
 
-count_order_matches <- function (order_comparison){ # Counting TRUE values for auto_arima_order_match
+
+
+# Let's breakdown count_order_matches
+
+
+
+gen_avg_values_for_orgl_and_refit <- function (order_comparison){ # Counting TRUE values for auto_arima_order_match
   # calc avg statistics for the order comparison.
   auto_arima_true_count <- sum(sapply(order_comparison, function(x) x$auto_arima_order_match))
   # TODO: get the indicies of true matches
@@ -432,22 +361,21 @@ count_order_matches <- function (order_comparison){ # Counting TRUE values for a
     avg_insig_params_auto_arima_model = avg_insig_params_auto_arima_model
   )
   # Output the counts
-  output_file_path <- "C:/Users/tabis/OneDrive - Swinburne University/Summer Project 2023/TestingR/Week 1+/output_2.csv"
+  output_file_path <- "C:/Users/tabis/OneDrive - Swinburne University/Summer Project 2023/TestingR/Week 1+/output_3.csv"
   write.table(test_data, file = output_file_path, append = TRUE, sep = ",", row.names = FALSE, col.names = !file.exists(output_file_path), quote = FALSE)
 }
 # Run the analysis
-print("Running ARIMA analysis...")
-num_observations <- NUM_OBSERVATIONS
 
+print("Running ARIMA analysis...")
 order_comparison <- list()
 # comparison_results <- list()
-num_iters_csv <- 2
+num_iters_csv <- 10
 for(i in seq_along(1:num_iters_csv))
 {
   print(i)
   random_arima_data_for_testing <- generate_random_arima(max_p = MAX_P, max_d = MAX_D, max_q = MAX_Q, num_observations = NUM_OBSERVATIONS, seed = NULL)[[1]]
-  order_comparison[[i]] <- compare_arima_order(random_arima_data_for_testing)
+  order_comparison[[i]] <- get_info_about_models(random_arima_data_for_testing)
   order_comparison[[i]]$data <- random_arima_data_for_testing
 }
 
-count_order_matches(order_comparison)
+gen_avg_values_for_orgl_and_refit(order_comparison)
