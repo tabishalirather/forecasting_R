@@ -1,0 +1,6 @@
+auto_arima TRUE count:  8 
+auto_arima FALSE count:  42 
+least_p TRUE count:  7 
+least_p FALSE count:  43 
+avg_rmse_least_p_model_values:  1.158424 
+avg_rmse_auto_arima_model:  1.178068 

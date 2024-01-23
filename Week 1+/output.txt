@@ -1,0 +1,118 @@
+New test
+auto_arima TRUE count:  30 
+auto_arima FALSE count:  70 
+least_p TRUE count:  5 
+least_p FALSE count:  95 
+avg_rmse_least_p_model_values:  1.194396 
+avg_rmse_auto_arima_model:  1.194755 
+New test 
+auto_arima TRUE count:  23 
+auto_arima FALSE count:  77 
+least_p TRUE count:  7 
+least_p FALSE count:  93 
+avg_rmse_least_p_model_values:  1.333695 
+avg_rmse_auto_arima_model:  1.332935 
+New test 
+auto_arima TRUE count:  28 
+auto_arima FALSE count:  72 
+least_p TRUE count:  8 
+least_p FALSE count:  92 
+avg_rmse_least_p_model_values:  1.139686 
+avg_rmse_auto_arima_model:  1.142871 
+New test 
+auto_arima TRUE count:  23 
+auto_arima FALSE count:  77 
+least_p TRUE count:  11 
+least_p FALSE count:  89 
+avg_rmse_least_p_model_values:  1.270872 
+avg_rmse_auto_arima_model:  1.273573 
+New test 
+auto_arima TRUE count:  2 
+auto_arima FALSE count:  3 
+least_p TRUE count:  3 
+least_p FALSE count:  2 
+avg_rmse_least_p_model_values:  1.18377 
+avg_rmse_auto_arima_model:  1.190686 
+New test 
+auto_arima TRUE count:  1 
+auto_arima FALSE count:  4 
+least_p TRUE count:  0 
+least_p FALSE count:  5 
+avg_rmse_least_p_model_values:  1.212569 
+avg_rmse_auto_arima_model:  1.412809 
+New test 
+auto_arima TRUE count:  0 
+auto_arima FALSE count:  5 
+least_p TRUE count:  0 
+least_p FALSE count:  5 
+avg_rmse_least_p_model_values:  1.080473 
+avg_rmse_auto_arima_model:  1.1494 
+New test 
+auto_arima TRUE count:  1 
+auto_arima FALSE count:  4 
+least_p TRUE count:  0 
+least_p FALSE count:  5 
+avg_rmse_least_p_model_values:  1.054806 
+avg_rmse_auto_arima_model:  1.050034 
+New test 
+auto_arima TRUE count:  1 
+auto_arima FALSE count:  4 
+least_p TRUE count:  0 
+least_p FALSE count:  5 
+avg_rmse_least_p_model_values:  1.367571 
+avg_rmse_auto_arima_model:  1.375219 
+New test 
+auto_arima TRUE count:  1 
+auto_arima FALSE count:  4 
+least_p TRUE count:  0 
+least_p FALSE count:  5 
+avg_rmse_least_p_model_values:  1.642995 
+avg_rmse_auto_arima_model:  1.66712 
+New test 
+auto_arima TRUE count:  2 
+auto_arima FALSE count:  3 
+least_p TRUE count:  0 
+least_p FALSE count:  5 
+avg_rmse_least_p_model_values:  1.029159 
+avg_rmse_auto_arima_model:  1.038217 
+New test 
+auto_arima TRUE count:  1 
+auto_arima FALSE count:  4 
+least_p TRUE count:  2 
+least_p FALSE count:  3 
+avg_rmse_least_p_model_values:  1.143772 
+avg_rmse_auto_arima_model:  1.142554 
+New test 
+auto_arima TRUE count:  0 
+auto_arima FALSE count:  5 
+least_p TRUE count:  0 
+least_p FALSE count:  5 
+avg_rmse_least_p_model_values:  1.058656 
+avg_rmse_auto_arima_model:  1.092528 
+New test 
+auto_arima TRUE count:  3 
+auto_arima FALSE count:  2 
+least_p TRUE count:  0 
+least_p FALSE count:  5 
+avg_rmse_least_p_model_values:  0.8590665 
+avg_rmse_auto_arima_model:  0.8612406 
+avg_insig_params_least_p_model:  3.2 
+avg_insig_params_auto_arima_model:  0 
+New test 
+auto_arima TRUE count:  2 
+auto_arima FALSE count:  3 
+least_p TRUE count:  0 
+least_p FALSE count:  5 
+avg_rmse_least_p_model_values:  1.119527 
+avg_rmse_auto_arima_model:  1.116593 
+avg_insig_params_least_p_model:  2.2 
+avg_insig_params_auto_arima_model:  1 
+New test 
+auto_arima TRUE count:  3 
+auto_arima FALSE count:  2 
+least_p TRUE count:  2 
+least_p FALSE count:  3 
+avg_rmse_least_p_model_values:  1.118567 
+avg_rmse_auto_arima_model:  1.132698 
+avg_insig_params_least_p_model:  2.4 
+avg_insig_params_auto_arima_model:  0.2 
