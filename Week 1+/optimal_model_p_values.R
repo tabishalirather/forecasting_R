@@ -1,6 +1,3 @@
-library(tseries)
-library(dplyr)
-library(urca)
 library(forecast)
 rm(list = ls())
 
@@ -9,7 +6,6 @@ MAX_P <- 5
 MAX_Q <- 5
 MAX_D <- 0
 # Fxn to geneate random ARIMA data and model
-
 generate_random_arima <- function(max_p, max_d, max_q, num_observations, seed = NULL)
 {
   # Setting a seed for reproducibility (optional, can be removed or modified)
@@ -174,8 +170,9 @@ perform_ts_cross_validation <- function(random_arima_data, fitted_model, initial
 }
 
 
-run_arima_analysis <- function(num_observations, random_arima_data) {
-  num_observations <- 400
+run_arima_analysis <- function(random_arima_data) {
+  # model_list_for_plotting <<- list()
+  # num_observations <- 400
   # Generate random ARIMA data and model
   if (is.null(random_arima_data[[1]])) {
     stop("ARIMA data generation failed.")
@@ -187,8 +184,8 @@ run_arima_analysis <- function(num_observations, random_arima_data) {
   best_model_auto_arima <- auto.arima(random_arima_data, allowdrift = TRUE, approximation = FALSE, stepwise = FALSE)
 
   # Analyze models
-  models_analysis_least_p <- analyse_significant_parameters(best_model_least_p, significance_level = 0.05)
-  models_analysis_auto_arima <- analyse_significant_parameters(best_model_auto_arima, significance_level = 0.05)
+  # models_analysis_least_p <- analyse_significant_parameters(best_model_least_p, significance_level = 0.05)
+  # models_analysis_auto_arima <- analyse_significant_parameters(best_model_auto_arima, significance_level = 0.05)
 
   # Split data and forecast
   split <- split_data(random_arima_data)
@@ -198,8 +195,8 @@ run_arima_analysis <- function(num_observations, random_arima_data) {
 
 
   # Perform cross-validation
-  average_errors_least_p <- perform_ts_cross_validation(random_arima_data, best_model_least_p)
-  average_errors_auto_arima <- perform_ts_cross_validation(random_arima_data, best_model_auto_arima)
+  # average_errors_least_p <- perform_ts_cross_validation(random_arima_data, best_model_least_p)
+  # average_errors_auto_arima <- perform_ts_cross_validation(random_arima_data, best_model_auto_arima)
 
   # Evaluate performance
   performance_least_p <- evaluate_performance(split$test, forecast_least_p$mean)
@@ -207,16 +204,16 @@ run_arima_analysis <- function(num_observations, random_arima_data) {
 
   model_list_for_plotting <<- list(
     "Least p-value Model" = list(
-      model = best_model_least_p,
-      overfit_analysis = models_analysis_least_p,
-      cross_validation_errors = average_errors_least_p,
+      # model = best_model_least_p,
+      # overfit_analysis = models_analysis_least_p,
+      # cross_validation_errors = average_errors_least_p,
       forecast = forecast_least_p,
       performance = performance_least_p
     ),
     "Auto.arima Model" = list(
-      model = best_model_auto_arima,
-      overfit_analysis = models_analysis_auto_arima,
-      cross_validation_errors = average_errors_auto_arima,
+      # model = best_model_auto_arima,
+      # overfit_analysis = models_analysis_auto_arima,
+      # cross_validation_errors = average_errors_auto_arima,
       forecast = forecast_auto_arima,
       performance = performance_auto_arima
     )
@@ -226,39 +223,39 @@ run_arima_analysis <- function(num_observations, random_arima_data) {
 
 
 # Function to rank models based on chosen RMSE type or both
-rank_models_rmse <- function(analysis, use_rmse_type = "cv") {
-  model_names <- names(analysis)
-  # Initialize an empty data frame
-  rmse_df <- data.frame(Model = model_names)
-  # Choose which RMSE to use based on the use_rmse_type
-  if (use_rmse_type == "cv" || use_rmse_type == "both") {
-    # Use RMSE from cross-validation
-    rmse_values_cv <- sapply(analysis, function(x) x$cross_validation_errors[[2]])
-    rmse_df$RMSE_CV <- rmse_values_cv
-  }
-  if (use_rmse_type == "ep" || use_rmse_type == "both") {
-    # Use RMSE from evaluate_performance
-    rmse_values_ep <- sapply(analysis, function(x) x$performance$RMSE)
-    rmse_df$RMSE_EP <- rmse_values_ep
-  }
-
-  # Ranking the models based on chosen RMSE type(s)
-  if (use_rmse_type == "cv") {
-    rmse_df <- rmse_df %>%
-      arrange(RMSE_CV) %>%
-      mutate(Rank_CV = dense_rank(RMSE_CV))
-  } else if (use_rmse_type == "ep") {
-    rmse_df <- rmse_df %>%
-      arrange(RMSE_EP) %>%
-      mutate(Rank_EP = dense_rank(RMSE_EP))
-  } else if (use_rmse_type == "both") {
-    rmse_df <- rmse_df %>%
-      arrange(RMSE_CV, RMSE_EP) %>%
-      mutate(Rank_CV = dense_rank(RMSE_CV),
-             Rank_EP = dense_rank(RMSE_EP))
-  }
-  return(rmse_df)
-}
+# rank_models_rmse <- function(analysis, use_rmse_type = "cv") {
+#   model_names <- names(analysis)
+#   # Initialize an empty data frame
+#   rmse_df <- data.frame(Model = model_names)
+#   # Choose which RMSE to use based on the use_rmse_type
+#   if (use_rmse_type == "cv" || use_rmse_type == "both") {
+#     # Use RMSE from cross-validation
+#     rmse_values_cv <- sapply(analysis, function(x) x$cross_validation_errors[[2]])
+#     rmse_df$RMSE_CV <- rmse_values_cv
+#   }
+#   if (use_rmse_type == "ep" || use_rmse_type == "both") {
+#     # Use RMSE from evaluate_performance
+#     rmse_values_ep <- sapply(analysis, function(x) x$performance$RMSE)
+#     rmse_df$RMSE_EP <- rmse_values_ep
+#   }
+#
+#   # Ranking the models based on chosen RMSE type(s)
+#   if (use_rmse_type == "cv") {
+#     rmse_df <- rmse_df %>%
+#       arrange(RMSE_CV) %>%
+#       mutate(Rank_CV = dense_rank(RMSE_CV))
+#   } else if (use_rmse_type == "ep") {
+#     rmse_df <- rmse_df %>%
+#       arrange(RMSE_EP) %>%
+#       mutate(Rank_EP = dense_rank(RMSE_EP))
+#   } else if (use_rmse_type == "both") {
+#     rmse_df <- rmse_df %>%
+#       arrange(RMSE_CV, RMSE_EP) %>%
+#       mutate(Rank_CV = dense_rank(RMSE_CV),
+#              Rank_EP = dense_rank(RMSE_EP))
+#   }
+#   return(rmse_df)
+# }
 
 
 refit_least_p_model <- function (order_comparison) {
@@ -342,24 +339,33 @@ compare_arima_order <- function (random_arima_data_for_testing)
   models_analysis_auto_arima <- analyse_significant_parameters(auto_arima_model)
 
   # Run the analysis once and store the result
-  arima_analysis_result <- run_arima_analysis(NUM_OBSERVATIONS, random_arima_data_for_testing)
+  # arima_analysis_result <- run_arima_analysis(random_arima_data_for_testing)
 
   # Extract the count of insignificant parameters for both models
-  count_insig_params_p_model <- arima_analysis_result$`Least p-value Model`$overfit_analysis$count_less_significant_parameters
-  count_insig_params_auto_arima_model <- arima_analysis_result$`Auto.arima Model`$overfit_analysis$count_less_significant_parameters
+  # count_insig_params_p_model <- arima_analysis_result$`Least p-value Model`$overfit_analysis$count_less_significant_parameters
+
+  count_insig_params_p_model <- models_analysis_least_p$count_less_significant_parameters
+
+  # count_insig_params_auto_arima_model <- arima_analysis_result$`Auto.arima Model`$overfit_analysis$count_less_significant_parameters
+    count_insig_params_auto_arima_model <- models_analysis_auto_arima$count_less_significant_parameters
 
 
   comparison_results <- list(
     auto_arima_order_match = all(auto_arima_order == actual_order),
     auto_arima_order = auto_arima_order,
+
     least_p_order_match = all(least_p_order == actual_order),
     least_p_order = least_p_order,
+
     avg_rmse_least_p_model = avg_rmse_least_p_model,
     avg_rmse_auto_arima_model = avg_rmse_auto_arima_model,
+
     count_insig_params_p_model = count_insig_params_p_model,
     count_insig_params_auto_arima_model = count_insig_params_auto_arima_model,
+
     least_p_model = least_p_model$best_model_min_p,
     auto_arima_model = auto_arima_model,
+
     models_analysis_least_p = models_analysis_least_p,
     models_analysis_auto_arima = models_analysis_auto_arima
   )
