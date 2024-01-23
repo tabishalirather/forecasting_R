@@ -20,8 +20,6 @@ generate_random_arima <- function(max_p, max_d, max_q, num_observations, seed = 
     set.seed(seed)
   }
   # Randomly select the values for p, d, and q
-  # p_for_now <- 4
-  # q_for_now <- 3
   repeat
   {
     p <- sample(0:max_p, 1)
@@ -81,25 +79,25 @@ fit_arima_models <- function(random_arima_data, max_p, max_q) {
 }
 
 # Fxn to calculate signficiancen p_values for parameters.
-get_significant_p_values <- function(model) {
-  # Extract coefficients and their standard errors
-  coefficients <- coef(model)
-  vcov_matrix <- vcov(model)
-  vcov_matrix[vcov_matrix < 0] <- 0
-  std_errors <- sqrt(diag(vcov_matrix))
-  # Calculate z-scores
-  z_scores <- coefficients / std_errors
-  # Calculate two-tailed p-values
-  p_values <- 2 * (1 - pnorm(abs(z_scores)))
-  model_p_values <- list(
-    model = model,
-    p_value = p_values
-  )
-  return(model_p_values)
-}
+# get_significant_p_values <- function(model) {
+#   # Extract coefficients and their standard errors
+#   coefficients <- coef(model)
+#   vcov_matrix <- vcov(model)
+#   vcov_matrix[vcov_matrix < 0] <- 0
+#   std_errors <- sqrt(diag(vcov_matrix))
+#   # Calculate z-scores
+#   z_scores <- coefficients / std_errors
+#   # Calculate two-tailed p-values
+#   p_values <- 2 * (1 - pnorm(abs(z_scores)))
+#   model_p_values <- list(
+#     model = model,
+#     p_value = p_values
+#   )
+#   return(model_p_values)
+# }
 
 # Find optimal model with least sum of p_values.
-find_best_model_least_p <- function(model_list) {
+find_best_model_max_p <- function(model_list) {
   p_sw_arr <<- array(NaN, dim = length(model_list))
   p_lbq_arr <<- array(NaN, dim = length(model_list))
   p_ttest_arr <<- array(NaN, dim = length(model_list))
@@ -316,24 +314,24 @@ run_arima_analysis <- function(num_observations, random_arima_data) {
   # Fit ARIMA models
   model_list <- fit_arima_models(random_arima_data, max_p = 3, max_q = 3)
   # Find best models based on different criteria
-  best_model_least_p <- find_best_model_least_p(model_list)$best_model
+  best_model_least_p <- find_best_model_max_p(model_list)$best_model
   best_model_auto_arima <- auto.arima(random_arima_data, allowdrift = TRUE, approximation = FALSE, stepwise = FALSE)
-  best_model_least_aic_bic <- find_best_model_least_aic_bic(model_list)$best_model
-  best_model_least_ic_high_prop_sig_p_vals <- find_best_model_least_ic_high_prop_sig_p_vals(model_list)$best_model
-  best_model_least_ic_3_p_vals <- find_best_model_least_ic_3_p_vals(model_list)$best_model
+  # best_model_least_aic_bic <- find_best_model_least_aic_bic(model_list)$best_model
+  # best_model_least_ic_high_prop_sig_p_vals <- find_best_model_least_ic_high_prop_sig_p_vals(model_list)$best_model
+  # best_model_least_ic_3_p_vals <- find_best_model_least_ic_3_p_vals(model_list)$best_model
 
   # Analyze models
   models_analysis_least_p <- analyse_significant_parameters(best_model_least_p, significance_level = 0.05)
   models_analysis_auto_arima <- analyse_significant_parameters(best_model_auto_arima, significance_level = 0.05)
-  models_analysis_least_aic_bic <- analyse_significant_parameters(best_model_least_aic_bic, significance_level = 0.05)
-  models_analysis_least_ic_high_prop_sig_p_vals <- analyse_significant_parameters(best_model_least_ic_high_prop_sig_p_vals, significance_level = 0.05)
-  models_analysis_least_ic_3_p_vals <- analyse_significant_parameters(best_model_least_ic_3_p_vals, significance_level = 0.05)
+  # models_analysis_least_aic_bic <- analyse_significant_parameters(best_model_least_aic_bic, significance_level = 0.05)
+  # models_analysis_least_ic_high_prop_sig_p_vals <- analyse_significant_parameters(best_model_least_ic_high_prop_sig_p_vals, significance_level = 0.05)
+  # models_analysis_least_ic_3_p_vals <- analyse_significant_parameters(best_model_least_ic_3_p_vals, significance_level = 0.05)
 
-  signifance_prop_least_p <- calculate_proportion_significant(models_analysis_least_p)
-  signifance_prop_auto_arima <- calculate_proportion_significant(models_analysis_auto_arima)
-  signifance_prop_least_aic_bic <- calculate_proportion_significant(models_analysis_least_aic_bic)
-  signifance_prop_least_ic_high_prop_sig_p_vals <- calculate_proportion_significant(models_analysis_least_ic_high_prop_sig_p_vals)
-  signifance_prop_least_ic_3_p_vals <- calculate_proportion_significant(models_analysis_least_ic_3_p_vals)
+  # signifance_prop_least_p <- calculate_proportion_significant(models_analysis_least_p)
+  # signifance_prop_auto_arima <- calculate_proportion_significant(models_analysis_auto_arima)
+  # signifance_prop_least_aic_bic <- calculate_proportion_significant(models_analysis_least_aic_bic)
+  # signifance_prop_least_ic_high_prop_sig_p_vals <- calculate_proportion_significant(models_analysis_least_ic_high_prop_sig_p_vals)
+  # signifance_prop_least_ic_3_p_vals <- calculate_proportion_significant(models_analysis_least_ic_3_p_vals)
 
 
   # Split data and forecast
@@ -341,23 +339,23 @@ run_arima_analysis <- function(num_observations, random_arima_data) {
   forecast_least_p <- forecast::forecast(best_model_least_p, length(split$test))
   print("forecast_tes working")
   forecast_auto_arima <- forecast::forecast(best_model_auto_arima, length(split$test))
-  forecast_least_aic_bic <- forecast::forecast(best_model_least_aic_bic, length(split$test))
-  forecast_least_ic_high_prop_sig_p_vals <- forecast::forecast(best_model_least_ic_high_prop_sig_p_vals, length(split$test))
-  forecast_least_ic_3_p_vals <- forecast::forecast(best_model_least_ic_3_p_vals, length(split$test))
+  # forecast_least_aic_bic <- forecast::forecast(best_model_least_aic_bic, length(split$test))
+  # forecast_least_ic_high_prop_sig_p_vals <- forecast::forecast(best_model_least_ic_high_prop_sig_p_vals, length(split$test))
+  # forecast_least_ic_3_p_vals <- forecast::forecast(best_model_least_ic_3_p_vals, length(split$test))
 
   # Perform cross-validation
   average_errors_least_p <- perform_ts_cross_validation(random_arima_data, best_model_least_p)
   average_errors_auto_arima <- perform_ts_cross_validation(random_arima_data, best_model_auto_arima)
-  average_errors_least_aic_bic <- perform_ts_cross_validation(random_arima_data, best_model_least_aic_bic)
-  average_errors_least_ic_high_prop_sig_p_vals <- perform_ts_cross_validation(random_arima_data, best_model_least_ic_high_prop_sig_p_vals)
-  average_errors_least_ic_3_p_vals <- perform_ts_cross_validation(random_arima_data, best_model_least_ic_3_p_vals)
+  # average_errors_least_aic_bic <- perform_ts_cross_validation(random_arima_data, best_model_least_aic_bic)
+  # average_errors_least_ic_high_prop_sig_p_vals <- perform_ts_cross_validation(random_arima_data, best_model_least_ic_high_prop_sig_p_vals)
+  # average_errors_least_ic_3_p_vals <- perform_ts_cross_validation(random_arima_data, best_model_least_ic_3_p_vals)
 
   # Evaluate performance
   performance_least_p <- evaluate_performance(split$test, forecast_least_p$mean)
   performance_auto_arima <- evaluate_performance(split$test, forecast_auto_arima$mean)
-  performance_least_aic_bic <- evaluate_performance(split$test, forecast_least_aic_bic$mean)
-  performance_least_ic_high_prop_p_vals <- evaluate_performance(split$test, forecast_least_ic_high_prop_sig_p_vals$mean)
-  performance_least_ic_3_p_vals <- evaluate_performance(split$test, forecast_least_ic_3_p_vals$mean)
+  # performance_least_aic_bic <- evaluate_performance(split$test, forecast_least_aic_bic$mean)
+  # performance_least_ic_high_prop_p_vals <- evaluate_performance(split$test, forecast_least_ic_high_prop_sig_p_vals$mean)
+  # performance_least_ic_3_p_vals <- evaluate_performance(split$test, forecast_least_ic_3_p_vals$mean)
 
 
   model_list_for_plotting <<- list(
@@ -366,42 +364,41 @@ run_arima_analysis <- function(num_observations, random_arima_data) {
       overfit_analysis = models_analysis_least_p,
       cross_validation_errors = average_errors_least_p,
       forecast = forecast_least_p,
-      performance = performance_least_p,
-      significance_prop = signifance_prop_least_p
+      performance = performance_least_p
+      # significance_prop = signifance_prop_least_p
     ),
     "Auto.arima Model" = list(
       model = best_model_auto_arima,
       overfit_analysis = models_analysis_auto_arima,
       cross_validation_errors = average_errors_auto_arima,
       forecast = forecast_auto_arima,
-      performance = performance_auto_arima,
-      significance_prop = signifance_prop_auto_arima
-    ),
-    "Least AIC/BIC Model" = list(
-      model = best_model_least_aic_bic,
-      overfit_analysis = models_analysis_least_aic_bic,
-      cross_validation_errors = average_errors_least_aic_bic,
-      forecast = forecast_least_aic_bic,
-      performance = performance_least_aic_bic,
-      significance_prop = signifance_prop_least_aic_bic
-    ),
-    "High Prop Sig p-vals Model" = list(
-      model = best_model_least_ic_high_prop_sig_p_vals,
-      overfit_analysis = models_analysis_least_ic_high_prop_sig_p_vals,
-      cross_validation_errors = average_errors_least_ic_high_prop_sig_p_vals,
-      forecast = forecast_least_ic_high_prop_sig_p_vals,
-      performance = performance_least_ic_high_prop_p_vals,
-      significance_prop = signifance_prop_least_ic_high_prop_sig_p_vals
-    ),
-    "Least IC 3 p-vals Model" = list(
-      model = best_model_least_ic_3_p_vals,
-      overfit_analysis = models_analysis_least_ic_3_p_vals,
-      cross_validation_errors = average_errors_least_ic_3_p_vals,
-      forecast = forecast_least_ic_3_p_vals,
-      performance = performance_least_ic_3_p_vals,
-      significance_prop = signifance_prop_least_ic_3_p_vals
-
+      performance = performance_auto_arima
+      # significance_prop = signifance_prop_auto_arima
     )
+    # "Least AIC/BIC Model" = list(
+    #   model = best_model_least_aic_bic,
+    #   overfit_analysis = models_analysis_least_aic_bic,
+    #   cross_validation_errors = average_errors_least_aic_bic,
+    #   forecast = forecast_least_aic_bic,
+    #   performance = performance_least_aic_bic,
+    #   significance_prop = signifance_prop_least_aic_bic
+    # ),
+    # "High Prop Sig p-vals Model" = list(
+    #   model = best_model_least_ic_high_prop_sig_p_vals,
+    #   overfit_analysis = models_analysis_least_ic_high_prop_sig_p_vals,
+    #   cross_validation_errors = average_errors_least_ic_high_prop_sig_p_vals,
+    #   forecast = forecast_least_ic_high_prop_sig_p_vals,
+    #   performance = performance_least_ic_high_prop_p_vals,
+    #   significance_prop = signifance_prop_least_ic_high_prop_sig_p_vals
+    # ),
+    # "Least IC 3 p-vals Model" = list(
+    #   model = best_model_least_ic_3_p_vals,
+    #   overfit_analysis = models_analysis_least_ic_3_p_vals,
+    #   cross_validation_errors = average_errors_least_ic_3_p_vals,
+    #   forecast = forecast_least_ic_3_p_vals,
+    #   performance = performance_least_ic_3_p_vals,
+    #   significance_prop = signifance_prop_least_ic_3_p_vals
+    # )
   )
 }
 
@@ -508,12 +505,12 @@ compare_arima_order <- function (random_arima_data_for_testing)
 {
   model_list <- fit_arima_models(random_arima_data_for_testing, max_p = 3, max_q = 3)
 
-  least_p_model <- find_best_model_least_p(model_list)
+  least_p_model <- find_best_model_max_p(model_list)
   auto_arima_model <- auto.arima(random_arima_data_for_testing, allowdrift = TRUE, approximation = FALSE, stepwise = FALSE )
   auto_arima_model$order <- c(auto_arima_model$arma[[1]], auto_arima_model$arma[[6]], auto_arima_model$arma[[2]])
-  least_aic_bic_model <- find_best_model_least_aic_bic(model_list)
-  least_ic_high_prop_sig_p_vals_model <- find_best_model_least_ic_high_prop_sig_p_vals(model_list)
-  least_ic_3_p_vals_model <- find_best_model_least_ic_3_p_vals(model_list)
+  # least_aic_bic_model <- find_best_model_least_aic_bic(model_list)
+  # least_ic_high_prop_sig_p_vals_model <- find_best_model_least_ic_high_prop_sig_p_vals(model_list)
+  # least_ic_3_p_vals_model <- find_best_model_least_ic_3_p_vals(model_list)
   # least_p_model$order <- c(least_p_model$best_model_min_p$arma[[1]], least_p_model$best_model_min_p$arma[[2]], least_p_model$best_model_min_p$arma[[6]])
   actual_order <- model_and_data[[2]]$order
   auto_arima_order <- auto_arima_model$order
@@ -614,77 +611,77 @@ count_order_matches <- function (order_comparison){ # Counting TRUE values for a
 print("Running ARIMA analysis...")
 num_observations <- NUM_OBSERVATIONS
 all_analysis <- list()
-run_single_iteration <- function(num_observations) {
-  # all_analysis[[iteration]] <- iteration
-  random_arima_data <- generate_random_arima(max_p = 5, max_d = 0, max_q = 5, num_observations, seed = NULL)[[1]]
-  analysis <<- run_arima_analysis(NUM_OBSERVATIONS, random_arima_data)
-  # Rank models based on cross-validation RMSE
-  ranked_models_cv <- rank_models_rmse(analysis, use_rmse_type = "both")
-  return(list(ranked_models_cv, analysis))
-
-}
+# run_single_iteration <- function(num_observations) {
+#   # all_analysis[[iteration]] <- iteration
+#   random_arima_data <- generate_random_arima(max_p = 5, max_d = 0, max_q = 5, num_observations, seed = NULL)[[1]]
+#   analysis <<- run_arima_analysis(NUM_OBSERVATIONS, random_arima_data)
+#   # Rank models based on cross-validation RMSE
+#   # ranked_models_cv <- rank_models_rmse(analysis, use_rmse_type = "both")
+#   # return(list(ranked_models_cv, analysis))
+#
+# }
 # Number of iterations to perform
-get_all_rankings_paralell <- function(num_iterations, num_observations) {
-  # Function definitions (e.g., run_single_iteration) should be included here or sourced if they are defined in separate files
-  # Detect the number of cores and set up a parallel cluster
-  num_cores <- detectCores() - 1
-  cl <- makeCluster(num_cores)
-  # Export necessary functions and objects to the cluster
-  clusterExport(cl, c("run_single_iteration", "NUM_OBSERVATIONS", "generate_random_arima", "run_arima_analysis",
-                      "rank_models_rmse", "fit_arima_models", "analyse_significant_parameters", "split_data",
-                      "forecast_model", "evaluate_performance", "perform_ts_cross_validation",
-                      "find_best_model_least_ic_3_p_vals", "find_best_model_least_ic_high_prop_sig_p_vals",
-                      "find_best_model_least_aic_bic", "find_best_model_least_p", "calculate_proportion_significant", "all_analysis"))
-
-  # Load required libraries in each node of the cluster
-  clusterEvalQ(cl, {
-    library(forecast)
-    library(dplyr)
-    # Load other necessary libraries here
-  })
-  stopCluster(cl)
-  return(all_rankings)
-}
+# get_all_rankings_paralell <- function(num_iterations, num_observations) {
+#   # Function definitions (e.g., run_single_iteration) should be included here or sourced if they are defined in separate files
+#   # Detect the number of cores and set up a parallel cluster
+#   num_cores <- detectCores() - 1
+#   cl <- makeCluster(num_cores)
+#   # Export necessary functions and objects to the cluster
+#   clusterExport(cl, c("run_single_iteration", "NUM_OBSERVATIONS", "generate_random_arima", "run_arima_analysis",
+#                       "rank_models_rmse", "fit_arima_models", "analyse_significant_parameters", "split_data",
+#                       "forecast_model", "evaluate_performance", "perform_ts_cross_validation",
+#                       "find_best_model_least_ic_3_p_vals", "find_best_model_least_ic_high_prop_sig_p_vals",
+#                       "find_best_model_least_aic_bic", "find_best_model_least_p", "calculate_proportion_significant", "all_analysis"))
+#
+#   # Load required libraries in each node of the cluster
+#   clusterEvalQ(cl, {
+#     library(forecast)
+#     library(dplyr)
+#     # Load other necessary libraries here
+#   })
+#   stopCluster(cl)
+#   return(all_rankings)
+# }
 # Function to calculate average rankings
-calculate_average_rankings <- function(all_rankings) {
-  # Combine all data frames into one
-  combined_rankings <- do.call(rbind, all_rankings)
-  # Calculate average RMSE for each model
-  average_rmse <- aggregate(cbind(RMSE_CV) ~ Model, data = combined_rankings, mean)
-  # Order models based on average RMSE in ascending order
-  average_rmse <- average_rmse[order(average_rmse$RMSE_CV), ]
-  # Add a new rank column based on the sorted average RMSE
-  average_rmse$Rank <- seq_along(average_rmse$RMSE_CV)
-  return(average_rmse)
-}
-num_iterations <- 1 # Adjust this as needed
-all_rankings <- list()
-for (i in 1:num_iterations) {
-  # all_rankings[[i]] <- run_single_iteration(num_observations)[[1]]
-}
+# calculate_average_rankings <- function(all_rankings) {
+#   # Combine all data frames into one
+#   combined_rankings <- do.call(rbind, all_rankings)
+#   # Calculate average RMSE for each model
+#   average_rmse <- aggregate(cbind(RMSE_CV) ~ Model, data = combined_rankings, mean)
+#   # Order models based on average RMSE in ascending order
+#   average_rmse <- average_rmse[order(average_rmse$RMSE_CV), ]
+#   # Add a new rank column based on the sorted average RMSE
+#   average_rmse$Rank <- seq_along(average_rmse$RMSE_CV)
+#   return(average_rmse)
+# }
+# num_iterations <- 1 # Adjust this as needed
+# all_rankings <- list()
+# for (i in 1:num_iterations) {
+#   # all_rankings[[i]] <- run_single_iteration(num_observations)[[1]]
+# }
 
 # cmmt these out for now:
-add_parameter_info <- function(analysis, ranked_models_df) {
-  # Initialize new columns with NAs
-  ranked_models_df$Count_Less_Significant_Parameters <- NA
-  ranked_models_df$Prop_Significant_Params <- NA
-  # Loop through each row in ranked_models_df
-  for (i in seq_len(nrow(ranked_models_df))) {
-    model_name <- ranked_models_df$Model[i]
-    # Check if the model_name exists in analysis
-    if (model_name %in% names(analysis)) {
-      # Extract the count and proportion for the matching model
-      ranked_models_df$Count_Less_Significant_Parameters[i] <- analysis[[model_name]]$overfit_analysis$count_less_significant_parameters
-      ranked_models_df$Prop_Significant_Params[i] <- analysis[[model_name]]$overfit_analysis$prop_sig_params
-    }
-  }
-
-  return(ranked_models_df)
-}
+# add_parameter_info <- function(analysis, ranked_models_df) {
+#   # Initialize new columns with NAs
+#   ranked_models_df$Count_Less_Significant_Parameters <- NA
+#   ranked_models_df$Prop_Significant_Params <- NA
+#   # Loop through each row in ranked_models_df
+#   for (i in seq_len(nrow(ranked_models_df))) {
+#     model_name <- ranked_models_df$Model[i]
+#     # Check if the model_name exists in analysis
+#     if (model_name %in% names(analysis)) {
+#       # Extract the count and proportion for the matching model
+#       ranked_models_df$Count_Less_Significant_Parameters[i] <- analysis[[model_name]]$overfit_analysis$count_less_significant_parameters
+#       ranked_models_df$Prop_Significant_Params[i] <- analysis[[model_name]]$overfit_analysis$prop_sig_params
+#     }
+#   }
+#
+#   return(ranked_models_df)
+# }
 
 order_comparison <- list()
 # comparison_results <- list()
-num_iters_csv <- 20
+num_iters_csv <- 2
 for(i in seq_along(1:num_iters_csv))
 {
   print(i)
