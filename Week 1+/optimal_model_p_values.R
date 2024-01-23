@@ -16,7 +16,6 @@ generate_random_arima <- function(max_p, max_d, max_q, num_observations, seed = 
     print(seed)
     set.seed(seed)
   }
-
   # Randomly select the values for p, d, and q
   repeat
   {
