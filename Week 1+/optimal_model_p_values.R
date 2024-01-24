@@ -389,9 +389,9 @@ num_iters_csv <- 2
 #   order_comparison[[i]]$data <- random_arima_data_for_testing
 # }
 # num_iters_csv <- 4
-combine_lists <- function(x, y) {
-  c(x, list(y))
-}
+# combine_lists <- function(x, y) {
+#   c(x, list(y))
+# }
 order_comparison <- foreach(i = 1:num_iters_csv, .combine = 'c', .packages = c("forecast"), .multicombine = TRUE) %dopar% {
   model_and_data <- generate_random_arima(max_p = MAX_P, max_d = MAX_D, max_q = MAX_Q, num_observations = NUM_OBSERVATIONS, seed = NULL)
   random_arima_data_for_testing <- model_and_data[[1]]
