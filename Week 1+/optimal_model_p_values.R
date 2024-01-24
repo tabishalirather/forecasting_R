@@ -1,4 +1,6 @@
 library(forecast)
+library(foreach)
+library(doParallel)
 rm(list = ls())
 
 NUM_OBSERVATIONS <- 300
@@ -52,7 +54,7 @@ generate_random_arima <- function(max_p, max_d, max_q, num_observations, seed = 
       break
     }
   }
-  model_and_data <<- list(rand_arima, rand_model)
+  model_and_data <- list(rand_arima, rand_model)
   return(model_and_data)
 }
 
@@ -303,7 +305,7 @@ get_info_about_models <- function (random_arima_data_for_testing)
 
 
 
-gen_avg_values_for_orgl_and_refit <- function (order_comparison){ # Counting TRUE values for auto_arima_order_match
+gen_avg_values_for_orgl_and_refit <- function (order_comparison, model_and_data){ # Counting TRUE values for auto_arima_order_match
   # calc avg statistics for the order comparison.
   auto_arima_true_count <- sum(sapply(order_comparison, function(x) x$auto_arima_order_match))
   # TODO: get the indicies of true matches
@@ -369,13 +371,38 @@ gen_avg_values_for_orgl_and_refit <- function (order_comparison){ # Counting TRU
 print("Running ARIMA analysis...")
 order_comparison <- list()
 # comparison_results <- list()
-num_iters_csv <- 10
-for(i in seq_along(1:num_iters_csv))
-{
-  print(i)
-  random_arima_data_for_testing <- generate_random_arima(max_p = MAX_P, max_d = MAX_D, max_q = MAX_Q, num_observations = NUM_OBSERVATIONS, seed = NULL)[[1]]
-  order_comparison[[i]] <- get_info_about_models(random_arima_data_for_testing)
-  order_comparison[[i]]$data <- random_arima_data_for_testing
-}
+print("Start pll processing:")
+num_cores <- parallel::detectCores()
+cl <- makeCluster(num_cores)
+registerDoParallel(cl)
 
-gen_avg_values_for_orgl_and_refit(order_comparison)
+
+
+num_iters_csv <- 2
+
+# for(i in seq_along(1:num_iters_csv))
+# {
+#   print(i)
+#   model_and_data <- generate_random_arima(max_p = MAX_P, max_d = MAX_D, max_q = MAX_Q, num_observations = NUM_OBSERVATIONS, seed = NULL)
+#   random_arima_data_for_testing <- model_and_data[[1]]
+#   order_comparison[[i]] <- get_info_about_models(random_arima_data_for_testing)
+#   order_comparison[[i]]$data <- random_arima_data_for_testing
+# }
+# num_iters_csv <- 4
+combine_lists <- function(x, y) {
+  c(x, list(y))
+}
+order_comparison <- foreach(i = 1:num_iters_csv, .combine = 'c', .packages = c("forecast"), .multicombine = TRUE) %dopar% {
+  model_and_data <- generate_random_arima(max_p = MAX_P, max_d = MAX_D, max_q = MAX_Q, num_observations = NUM_OBSERVATIONS, seed = NULL)
+  random_arima_data_for_testing <- model_and_data[[1]]
+
+  result <- get_info_about_models(random_arima_data_for_testing)
+  result$data <- random_arima_data_for_testing
+  result$model_and_data <- model_and_data
+  return(list(result))
+}
+# print(str(order_comparison))
+stopCluster(cl)
+# print(paste("order_comparison is: ", order_comparison[[1]]$model_and_data))
+# print("This is printing")
+gen_avg_values_for_orgl_and_refit(order_comparison, order_comparison$model_and_data)
