@@ -429,20 +429,19 @@ run_parallel_processing <- function(num_iters_csv) {
   cl <- makeCluster(num_cores)
   registerDoParallel(cl)
   all_objects <- ls(globalenv())
-  order_comparison <- foreach(i = 1:num_iters_csv, .combine = 'c', .packages = c("forecast"), .multicombine = TRUE, .export = all_objects) %dopar% {
-    model_and_data <- generate_random_arima(max_p = MAX_P, max_d = MAX_D, max_q = MAX_Q, num_observations = NUM_OBSERVATIONS, seed = NULL)
-    random_arima_data_for_testing <- model_and_data[[1]]
-
+  order_comparison <- list()
+  model_and_data <- list()
+  foreach(i = 1:num_iters_csv, .combine = 'c', .packages = c("forecast"), .multicombine = TRUE, .export = all_objects) %dopar% {
+    model_and_data[[i]] <- generate_random_arima(max_p = MAX_P, max_d = MAX_D, max_q = MAX_Q, num_observations = NUM_OBSERVATIONS, seed = NULL)
+    random_arima_data_for_testing <- model_and_data[[i]][[1]]
     result <- get_info_about_models(random_arima_data_for_testing)
     result$data <- random_arima_data_for_testing
-    result$model_and_data <- model_and_data
-    return(list(result))
+    result$model_and_data <- model_and_data[[i]]
+    order_comparison[[i]] <- list(result)
   }
   stopCluster(cl)
-  # gen_avg_values_for_orgl_and_refit(order_comparison, order_comparison$model_and_data)
-  process <- lapply(order_comparison, function(x) gen_avg_values_for_orgl_and_refit(order_comparison, x$model_and_data))
-
-  return(order_comparison)
+  gen_avg_values_for_orgl_and_refit(order_comparison, model_and_data)
+  return(list(order_comparison = order_comparison, model_and_data = model_and_data))
 }
 
 
@@ -454,12 +453,14 @@ run_sequential_processing <- function(num_iters_csv, MAX_P, MAX_D, MAX_Q, NUM_OB
   order_comparison <- list()
   for(i in seq_along(1:num_iters_csv)) {
     model_and_data <- generate_random_arima(max_p = MAX_P, max_d = MAX_D, max_q = MAX_Q, num_observations = NUM_OBSERVATIONS, seed = NULL)
+    print(paste("model_and_data is: ", model_and_data))
     random_arima_data_for_testing <- model_and_data[[1]]
     order_comparison[[i]] <- get_info_about_models(random_arima_data_for_testing)
     order_comparison[[i]]$data <- random_arima_data_for_testing
-    order_comparison[[i]]$model_and_data <- model_and_data
+    order_comparison[[i]]$model <- model_and_data[[2]]$order
+    # order_comparison[[i]]$model_and_data <- model_and_data
   }
-  gen_avg_values_for_orgl_and_refit(order_comparison, order_comparison$model_and_data)
+  gen_avg_values_for_orgl_and_refit(order_comparison, model_and_data)
   # process <- lapply(order_comparison, function(x) gen_avg_values_for_orgl_and_refit(order_comparison, x$model_and_data))
   return(order_comparison)
 }
@@ -476,7 +477,7 @@ run_processing <- function(use_parallel_processing, num_iters_csv, MAX_P, MAX_D,
 
 
 num_iters_csv <- 3
-order_comparison <- run_processing(use_parallel_processing = FALSE, num_iters_csv, MAX_P, MAX_D, MAX_Q, NUM_OBSERVATIONS)
 
+order_comparison <- run_processing(use_parallel_processing = FALSE, num_iters_csv, MAX_P, MAX_D, MAX_Q, NUM_OBSERVATIONS)
 avg_p_vals <- average_p_values(order_comparison)
 avg_validation_score <- calc_avg_validation_auto_arima(order_comparison)
