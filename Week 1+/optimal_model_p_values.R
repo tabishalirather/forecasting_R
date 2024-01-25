@@ -177,16 +177,16 @@ refit_least_p_model <- function (order_comparison) {
   for(i in seq_along(order_comparison))
   {
     overfit_coeffs_least_p <- order_comparison[[i]]$models_analysis_least_p$less_significant_parameters
-    print(paste("overfit_coeffs_least_p is: ", overfit_coeffs_least_p))
+    # print(paste("overfit_coeffs_least_p is: ", overfit_coeffs_least_p))
     original_p <- order_comparison[[i]]$least_p_order[[1]]
-    print(paste("original_p in least p is: ", original_p))
+    # print(paste("original_p in least p is: ", original_p))
     original_q <- order_comparison[[i]]$least_p_order[[3]]
-    print(paste("original_q in least p is: ", original_q))
+    # print(paste("original_q in least p is: ", original_q))
 
     adjusted_p <- original_p - sum(overfit_coeffs_least_p %in% paste0("ar", 1:original_p))
-    print(paste("adjusted_p in least p is: ", adjusted_p))
+    # print(paste("adjusted_p in least p is: ", adjusted_p))
     adjusted_q <- original_q - sum(overfit_coeffs_least_p %in% paste0("ma", 1:original_q))
-    print(paste("adjusted_q in least p is: ", adjusted_q))
+    # print(paste("adjusted_q in least p is: ", adjusted_q))
 
     exclude_intercept <- "intercept" %in% overfit_coeffs_least_p
 
@@ -210,9 +210,9 @@ refit_auto_arima_model <- function (order_comparison) {
     overfit_coeffs_auto_arima <- order_comparison[[i]]$models_analysis_auto_arima$less_significant_parameters
     p <- order_comparison[[i]]$auto_arima_order[[1]]
     q <- order_comparison[[i]]$auto_arima_order[[3]]
-  print(paste("overfit_coeffs_auto_arima ", overfit_coeffs_auto_arima))
-    print(paste("original_p ", p))
-    print(paste("original_q ", q))
+    # print(paste("overfit_coeffs_auto_arima ", overfit_coeffs_auto_arima))
+    # print(paste("original_p ", p))
+    # print(paste("original_q ", q))
 
     p <- p - sum(overfit_coeffs_auto_arima %in% paste0("ar", 1:p))
     q <- q - sum(overfit_coeffs_auto_arima %in% paste0("ma", 1:q))
@@ -220,9 +220,9 @@ refit_auto_arima_model <- function (order_comparison) {
     exclude_intercept <- "intercept" %in% overfit_coeffs_auto_arima
 
     current_data <- order_comparison[[i]]$data
-  # print(paste("c(adjusted_p, 0, adjusted_q) ", c(adjusted_p, 0, adjusted_q)))
-    print(paste("adjusted_p ", p))
-    print(paste("adjusted_q ", q))
+    # print(paste("c(adjusted_p, 0, adjusted_q) ", c(adjusted_p, 0, adjusted_q)))
+    # print(paste("adjusted_p ", p))
+    # print(paste("adjusted_q ", q))
     refitted_model_auto_arima <- Arima(current_data, order=c(p, 0, q), include.mean=!exclude_intercept)
     new_rmse_vals[[i]] <- perform_ts_cross_validation(current_data, refitted_model_auto_arima)[[2]]
     refitted_model_analysis_auto_arima[[i]] <- analyse_significant_parameters(refitted_model_auto_arima)
@@ -232,10 +232,50 @@ refit_auto_arima_model <- function (order_comparison) {
   return(list(avg_new_rms_vals_auto_arima, refitted_model_analysis_auto_arima))
 }
 
-# Let's break down compare arima order into smaller, modular functions.
+calculate_p_values <- function(auto_arima_model) {
+  # Calculate p-values
+  sw_p_value <- shapiro.test(auto_arima_model$residuals)$p.value
+  lbq_test_p_value <- Box.test(auto_arima_model$residuals, lag = 20, type = "Ljung-Box")$p.value
+  t_test_p_value <- t.test(auto_arima_model$residuals)$p.value
 
+  # Return p-values as a list
+  list(sw_p_value = sw_p_value, lbq_test_p_value = lbq_test_p_value, t_test_p_value = t_test_p_value)
+}
 
+average_p_values <- function(order_comparison) {
+  # Calculate the average of each p-value separately
+  sw_p_values <<- lapply(order_comparison, function(x) x$p_values_list$sw_p_value)
+  lbq_test_p_values <<- lapply(order_comparison, function(x) x$p_values_list$lbq_test_p_value)
+  t_test_p_values <<- lapply(order_comparison, function(x) x$p_values_list$t_test_p_value)
+  avg_sw_p_value <- mean(unlist(sw_p_values))
+  avg_lbq_test_p_value <- mean(unlist(lbq_test_p_values))
+  avg_t_test_p_value <- mean(unlist(t_test_p_values))
+  # Return the average p-values as a list
+  list(avg_sw_p_value = avg_sw_p_value, avg_lbq_test_p_value = avg_lbq_test_p_value, avg_t_test_p_value = avg_t_test_p_value)
+}
 
+ calc_avg_validation_auto_arima <- function(order_comparison)
+ {
+    avg_validation_score <- mean(unlist(lapply(order_comparison, function(x) x$validation_score)))
+    # count_validated_models <- sum(unlist(lapply(order_comparison, function(x) x$validation_score)))
+    return(avg_validation_score)
+
+ }
+
+assign_validatin_auto_arima <- function(p_values_list) {
+
+  # Check if all p-values are greater than 0.05
+  if(all(unlist(p_values_list) > 0.05)) {
+    validation_score <- 1
+  } else {
+    validation_score <- 0
+  }
+
+  # Store the binary variable in a list
+  validation_score_list <- list(validation_score = validation_score)
+
+  return(validation_score_list)
+}
 
 get_info_about_models <- function (random_arima_data_for_testing)
 {
@@ -244,6 +284,12 @@ get_info_about_models <- function (random_arima_data_for_testing)
   least_p_model <- find_best_model_max_p(model_list)
   auto_arima_model <- auto.arima(random_arima_data_for_testing, allowdrift = TRUE, approximation = FALSE, stepwise = FALSE )
   auto_arima_model$order <- c(auto_arima_model$arma[[1]], auto_arima_model$arma[[6]], auto_arima_model$arma[[2]])
+
+  p_values_list <- calculate_p_values(auto_arima_model)
+  validation_score <- assign_validatin_auto_arima(p_values_list)
+
+
+
 
   actual_order <- model_and_data[[2]]$order
   auto_arima_order <- auto_arima_model$order
@@ -269,7 +315,7 @@ get_info_about_models <- function (random_arima_data_for_testing)
   count_insig_params_p_model <- models_analysis_least_p$count_less_significant_parameters
 
   # count_insig_params_auto_arima_model <- arima_analysis_result$`Auto.arima Model`$overfit_analysis$count_less_significant_parameters
-    count_insig_params_auto_arima_model <- models_analysis_auto_arima$count_less_significant_parameters
+  count_insig_params_auto_arima_model <- models_analysis_auto_arima$count_less_significant_parameters
 
 
   comparison_results <- list(
@@ -292,7 +338,10 @@ get_info_about_models <- function (random_arima_data_for_testing)
     models_analysis_auto_arima = models_analysis_auto_arima,
 
     performance_least_p = performance_least_p,
-    performance_auto_arima = performance_auto_arima
+    performance_auto_arima = performance_auto_arima,
+
+    validation_score = validation_score,
+    p_values_list = p_values_list
   )
   # }
   return(comparison_results)
@@ -367,7 +416,7 @@ gen_avg_values_for_orgl_and_refit <- function (order_comparison, model_and_data)
   output_file_path <- "C:/Users/tabis/OneDrive - Swinburne University/Summer Project 2023/TestingR/Week 1+/output_3.csv"
   write.table(test_data, file = output_file_path, append = TRUE, sep = ",", row.names = FALSE, col.names = !file.exists(output_file_path), quote = FALSE)
 
- invisible("Process complete")
+  invisible("Process complete")
 }
 # Run the analysis
 
@@ -380,32 +429,40 @@ run_parallel_processing <- function(num_iters_csv) {
   cl <- makeCluster(num_cores)
   registerDoParallel(cl)
   all_objects <- ls(globalenv())
-  order_comparison <- foreach(i = 1:num_iters_csv, .combine = 'c', .packages = c("forecast"), .multicombine = TRUE, .export = all_objects) %dopar% {
-    model_and_data <- generate_random_arima(max_p = MAX_P, max_d = MAX_D, max_q = MAX_Q, num_observations = NUM_OBSERVATIONS, seed = NULL)
-    random_arima_data_for_testing <- model_and_data[[1]]
-
+  order_comparison <- list()
+  model_and_data <- list()
+  foreach(i = 1:num_iters_csv, .combine = 'c', .packages = c("forecast"), .multicombine = TRUE, .export = all_objects) %dopar% {
+    model_and_data[[i]] <- generate_random_arima(max_p = MAX_P, max_d = MAX_D, max_q = MAX_Q, num_observations = NUM_OBSERVATIONS, seed = NULL)
+    random_arima_data_for_testing <- model_and_data[[i]][[1]]
     result <- get_info_about_models(random_arima_data_for_testing)
     result$data <- random_arima_data_for_testing
-    result$model_and_data <- model_and_data
-    return(list(result))
+    result$model_and_data <- model_and_data[[i]]
+    order_comparison[[i]] <- list(result)
   }
   stopCluster(cl)
-  # gen_avg_values_for_orgl_and_refit(order_comparison, order_comparison$model_and_data)
-   process <- lapply(order_comparison, function(x) gen_avg_values_for_orgl_and_refit(order_comparison, x$model_and_data))
+  gen_avg_values_for_orgl_and_refit(order_comparison, model_and_data)
+  return(list(order_comparison = order_comparison, model_and_data = model_and_data))
 }
+
+
+
+
 
 # Function for sequential processing
 run_sequential_processing <- function(num_iters_csv, MAX_P, MAX_D, MAX_Q, NUM_OBSERVATIONS) {
-  order_comparison <<- list()
+  order_comparison <- list()
   for(i in seq_along(1:num_iters_csv)) {
     model_and_data <- generate_random_arima(max_p = MAX_P, max_d = MAX_D, max_q = MAX_Q, num_observations = NUM_OBSERVATIONS, seed = NULL)
+    print(paste("model_and_data is: ", model_and_data))
     random_arima_data_for_testing <- model_and_data[[1]]
-    order_comparison[[i]] <<- get_info_about_models(random_arima_data_for_testing)
-    order_comparison[[i]]$data <<- random_arima_data_for_testing
-    order_comparison[[i]]$model_and_data <<- model_and_data
+    order_comparison[[i]] <- get_info_about_models(random_arima_data_for_testing)
+    order_comparison[[i]]$data <- random_arima_data_for_testing
+    order_comparison[[i]]$model <- model_and_data[[2]]$order
+    # order_comparison[[i]]$model_and_data <- model_and_data
   }
-  # gen_avg_values_for_orgl_and_refit(order_comparison, order_comparison$model_and_data)
-  process <- lapply(order_comparison, function(x) gen_avg_values_for_orgl_and_refit(order_comparison, x$model_and_data))
+  gen_avg_values_for_orgl_and_refit(order_comparison, model_and_data)
+  # process <- lapply(order_comparison, function(x) gen_avg_values_for_orgl_and_refit(order_comparison, x$model_and_data))
+  return(order_comparison)
 }
 
 # Function to choose between parallel and sequential processing
@@ -419,5 +476,8 @@ run_processing <- function(use_parallel_processing, num_iters_csv, MAX_P, MAX_D,
 
 
 
-num_iters_csv <- 2
-run_processing(use_parallel_processing = FALSE, num_iters_csv, MAX_P, MAX_D, MAX_Q, NUM_OBSERVATIONS)
+num_iters_csv <- 3
+
+order_comparison <- run_processing(use_parallel_processing = FALSE, num_iters_csv, MAX_P, MAX_D, MAX_Q, NUM_OBSERVATIONS)
+avg_p_vals <- average_p_values(order_comparison)
+avg_validation_score <- calc_avg_validation_auto_arima(order_comparison)
