@@ -338,10 +338,11 @@ gen_avg_values_for_orgl_and_refit <- function (order_comparison, model_and_data)
   print(paste("avg_insig_params_least_p_model_refit is: ", avg_insig_params_least_p_model_refit))
   avg_insig_params_auto_arima_model_refit <- mean(sapply(model_analysis_refit_auto_arima, function(x) x$count_less_significant_parameters))
   print(paste("avg_insig_params_auto_arima_model_refit is: ", avg_insig_params_auto_arima_model_refit))
-
+  actual_order <<- model_and_data[[2]]$order
   # Create a DF:
   test_data <- data.frame(
     actual_order = paste(model_and_data[[2]]$order, collapse = " "),
+    # actual_order = 204,
     num_obser = NUM_OBSERVATIONS,
 
     auto_arima_true_count = auto_arima_true_count,
@@ -365,6 +366,8 @@ gen_avg_values_for_orgl_and_refit <- function (order_comparison, model_and_data)
   # Output the counts
   output_file_path <- "C:/Users/tabis/OneDrive - Swinburne University/Summer Project 2023/TestingR/Week 1+/output_3.csv"
   write.table(test_data, file = output_file_path, append = TRUE, sep = ",", row.names = FALSE, col.names = !file.exists(output_file_path), quote = FALSE)
+
+ invisible("Process complete")
 }
 # Run the analysis
 
@@ -387,20 +390,22 @@ run_parallel_processing <- function(num_iters_csv) {
     return(list(result))
   }
   stopCluster(cl)
-  gen_avg_values_for_orgl_and_refit(order_comparison, order_comparison$model_and_data)
+  # gen_avg_values_for_orgl_and_refit(order_comparison, order_comparison$model_and_data)
+   process <- lapply(order_comparison, function(x) gen_avg_values_for_orgl_and_refit(order_comparison, x$model_and_data))
 }
 
 # Function for sequential processing
 run_sequential_processing <- function(num_iters_csv, MAX_P, MAX_D, MAX_Q, NUM_OBSERVATIONS) {
-  order_comparison <- list()
+  order_comparison <<- list()
   for(i in seq_along(1:num_iters_csv)) {
     model_and_data <- generate_random_arima(max_p = MAX_P, max_d = MAX_D, max_q = MAX_Q, num_observations = NUM_OBSERVATIONS, seed = NULL)
     random_arima_data_for_testing <- model_and_data[[1]]
-    order_comparison[[i]] <- get_info_about_models(random_arima_data_for_testing)
-    order_comparison[[i]]$data <- random_arima_data_for_testing
-    order_comparison[[i]]$model_and_data <- model_and_data
+    order_comparison[[i]] <<- get_info_about_models(random_arima_data_for_testing)
+    order_comparison[[i]]$data <<- random_arima_data_for_testing
+    order_comparison[[i]]$model_and_data <<- model_and_data
   }
-  gen_avg_values_for_orgl_and_refit(order_comparison, order_comparison$model_and_data)
+  # gen_avg_values_for_orgl_and_refit(order_comparison, order_comparison$model_and_data)
+  process <- lapply(order_comparison, function(x) gen_avg_values_for_orgl_and_refit(order_comparison, x$model_and_data))
 }
 
 # Function to choose between parallel and sequential processing
@@ -414,5 +419,5 @@ run_processing <- function(use_parallel_processing, num_iters_csv, MAX_P, MAX_D,
 
 
 
-num_iters_csv <- 10
+num_iters_csv <- 2
 run_processing(use_parallel_processing = FALSE, num_iters_csv, MAX_P, MAX_D, MAX_Q, NUM_OBSERVATIONS)
