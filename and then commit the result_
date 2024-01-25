@@ -1,0 +1,20 @@
+[1mdiff --git a/Week 1+/optimal_model_p_values.R b/Week 1+/optimal_model_p_values.R[m
+[1mindex 4b4c0bd..e1df59e 100644[m
+[1m--- a/Week 1+/optimal_model_p_values.R[m	
+[1m+++ b/Week 1+/optimal_model_p_values.R[m	
+[36m@@ -11,6 +11,7 @@[m [mMAX_P <- 5[m
+ MAX_Q <- 5[m
+ MAX_D <- 0[m
+ # Fxn to geneate random ARIMA data and model[m
+[32m+[m
+ generate_random_arima <- function(max_p, max_d, max_q, num_observations, seed = NULL)[m
+ {[m
+   # Setting a seed for reproducibility (optional, can be removed or modified)[m
+[36m@@ -18,7 +19,6 @@[m [mgenerate_random_arima <- function(max_p, max_d, max_q, num_observations, seed =[m
+     print(seed)[m
+     set.seed(seed)[m
+   }[m
+[31m-[m
+   # Randomly select the values for p, d, and q[m
+   # p_for_now <- 4[m
+   # q_for_now <- 3[m
