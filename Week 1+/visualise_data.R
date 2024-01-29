@@ -1,29 +1,37 @@
 library(dplyr)
 library(ggplot2)
+rm(list = ls())
 
-data <- read.csv("Week 1+/output_2.csv")
+data <- read.csv("Week 1+/output_4.csv")
 # Convert columns to numeric
 data$auto_arima_true_count <- as.numeric(as.character(data$auto_arima_true_count))
-data$least_p_true_count <- as.numeric(as.character(data$least_p_true_count))
-
 data$auto_arima_false_count <- as.numeric(as.character(data$auto_arima_false_count))
+
+data$least_p_true_count <- as.numeric(as.character(data$least_p_true_count))
 data$least_p_false_count <- as.numeric(as.character(data$least_p_false_count))
 
-data$refit_avg_rmse_auto_arima <- as.numeric(as.character(data$refit_avg_rmse_auto_arima))
-data$avg_rmse_auto_arima_model <- as.numeric(as.character(data$avg_rmse_auto_arima_model))
 
 data$refit_avg_rmse_least_p_model <- as.numeric(as.character(data$refit_avg_rmse_least_p_model))
 data$avg_rmse_least_p_model_values <- as.numeric(as.character(data$avg_rmse_least_p_model_values))
 
-data$refit_avg_insig_params_auto_arima_model <- as.numeric(as.character(data$refit_avg_insig_params_auto_arima_model))
-print(paste("refit_avg_insig_params_auto_arima_model", data$refit_avg_insig_params_auto_arima_model))
-data$avg_insig_params_auto_arima_model <- as.numeric(as.character(data$avg_insig_params_auto_arima_model))
+data$refit_avg_rmse_auto_arima <- as.numeric(as.character(data$refit_avg_rmse_auto_arima))
+data$avg_rmse_auto_arima_model <- as.numeric(as.character(data$avg_rmse_auto_arima_model))
 
 data$refit_avg_insig_params_least_p_model <- as.numeric(as.character(data$refit_avg_insig_params_least_p_model))
-print(paste("refit_avg_insig_params_least_p_model", data$refit_avg_insig_params_least_p_model))
+# print(paste("refit_avg_insig_params_least_p_model", data$refit_avg_insig_params_least_p_model))
 avg_refit_insig_params_least_p_model <- mean(data$refit_avg_insig_params_least_p_model, na.rm = TRUE)
-print(paste("avg_refit_insig_params_least_p_model", avg_refit_insig_params_least_p_model))
+# print(paste("avg_refit_insig_params_least_p_model", avg_refit_insig_params_least_p_model))
 data$avg_insig_params_least_p_model <- as.numeric(as.character(data$avg_insig_params_least_p_model))
+
+data$refit_avg_insig_params_auto_arima_model <- as.numeric(as.character(data$refit_avg_insig_params_auto_arima_model))
+# print(paste("refit_avg_insig_params_auto_arima_model", data$refit_avg_insig_params_auto_arima_model))
+data$avg_insig_params_auto_arima_model <- as.numeric(as.character(data$avg_insig_params_auto_arima_model))
+
+data$avg_sw_p_value <- as.numeric(as.character(data$avg_sw_p_value))
+data$avg_lbq_p_value <- as.numeric(as.character(data$avg_lbq_p_value))
+data$avg_t_test_p_value <- as.numeric(as.character(data$avg_t_test_p_value))
+data$avg_validation_score <- as.numeric(as.character(data$avg_validation_score))
+
 
 # summary(data)
 true_false_counts <- data.frame(
@@ -107,6 +115,40 @@ ggplot(data, aes(x = refit_avg_rmse_least_p_model)) +
   xlim(min(data$refit_avg_rmse_least_p_model)-0.2, max(data$refit_avg_rmse_least_p_model)+0.2) +
   theme_minimal() +
   theme(legend.position = "none")
+
+# Histograms for p-values
+ggplot(data, aes(x = avg_sw_p_value)) +
+  geom_histogram(binwidth = 0.01, fill = "blue", color = "black", alpha = 0.5) +
+  labs(x = "Average SW P-Value", y = "Frequency", title = "Histogram of Average SW P-Values") +
+  theme_minimal()
+
+ggplot(data, aes(x = avg_lbq_p_value)) +
+  geom_histogram(binwidth = 0.01, fill = "red", color = "black", alpha = 0.5) +
+  labs(x = "Average LBQ P-Value", y = "Frequency", title = "Histogram of Average LBQ P-Values") +
+  theme_minimal()
+
+ggplot(data, aes(x = avg_t_test_p_value)) +
+  geom_histogram(binwidth = 0.01, fill = "green", color = "black", alpha = 0.5) +
+  labs(x = "Average T-Test P-Value", y = "Frequency", title = "Histogram of Average T-Test P-Values") +
+  theme_minimal()
+
+# Bar plot for average validation score
+data$avg_validation_score_percent <- data$avg_validation_score * 100
+# print(data$avg_validation_score)
+# ggplot(data, aes(x = as.factor(row.names(data)), y = avg_validation_score_percent)) +
+#   geom_bar(stat = "identity", fill = "purple") +
+#   labs(x = "Test number", y = "Average % of validadted models (%)", title = "Average number of validated models as a Percentage for Each Test") +
+#   theme_minimal() +
+#   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+data$mean_avg_validation_score <- mean(data$avg_validation_score, na.rm = TRUE)
+ggplot(data, aes(x = as.factor(row.names(data)), y = avg_validation_score_percent)) +
+  geom_bar(stat = "identity", fill = "purple") +
+  geom_hline(yintercept = data$mean_avg_validation_score * 100, color = "red", linetype = "dashed") +
+  labs(x = "Test number", y = "Average % of validadted models (%)", title = "Average number of validated models as a Percentage for Each Test") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
 # Calculate IQR
 # Q1 <- quantile(data$refit_avg_rmse_least_p_model, 0.25)
 # Q3 <- quantile(data$refit_avg_rmse_least_p_model, 0.75)
