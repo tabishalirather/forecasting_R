@@ -7,6 +7,8 @@ NUM_OBSERVATIONS <- 300
 MAX_P <- 5
 MAX_Q <- 5
 MAX_D <- 0
+OUTPUT_PATH <- "C:/Users/tabis/OneDrive - Swinburne University/Summer Project 2023/TestingR/Week 1+/output_4.csv"
+NUM_TEST_MODELS <- 15
 # Fxn to geneate random ARIMA data and model
 generate_random_arima <- function(max_p, max_d, max_q, num_observations, seed = NULL)
 {
@@ -254,13 +256,13 @@ average_p_values <- function(order_comparison) {
   list(avg_sw_p_value = avg_sw_p_value, avg_lbq_test_p_value = avg_lbq_test_p_value, avg_t_test_p_value = avg_t_test_p_value)
 }
 
- calc_avg_validation_auto_arima <- function(order_comparison)
- {
-    avg_validation_score <- mean(unlist(lapply(order_comparison, function(x) x$validation_score)))
-    # count_validated_models <- sum(unlist(lapply(order_comparison, function(x) x$validation_score)))
-    return(avg_validation_score)
+calc_avg_validation_auto_arima <- function(order_comparison)
+{
+  avg_validation_score <- mean(unlist(lapply(order_comparison, function(x) x$validation_score)))
+  # count_validated_models <- sum(unlist(lapply(order_comparison, function(x) x$validation_score)))
+  return(avg_validation_score)
 
- }
+}
 
 assign_validatin_auto_arima <- function(p_values_list) {
 
@@ -413,10 +415,29 @@ gen_avg_values_for_orgl_and_refit <- function (order_comparison, model_and_data)
     avg_insig_params_auto_arima_model = avg_insig_params_auto_arima_model
   )
   # Output the counts
-  output_file_path <- "C:/Users/tabis/OneDrive - Swinburne University/Summer Project 2023/TestingR/Week 1+/output_3.csv"
-  write.table(test_data, file = output_file_path, append = TRUE, sep = ",", row.names = FALSE, col.names = !file.exists(output_file_path), quote = FALSE)
+  output_file_path <- OUTPUT_PATH
+  write.table(test_data, file = output_file_path, append = TRUE, sep = ",", row.names = FALSE, col.names = FALSE, quote = FALSE)
 
   invisible("Process complete")
+}
+append_to_file <- function(avg_p_vals, avg_validation_score, output_file_path) {
+  # Read the file as a vector of lines
+  lines <- readLines(output_file_path)
+
+  # Extract the values from the list
+  avg_sw_p_value <- avg_p_vals$avg_sw_p_value
+  avg_lbq_test_p_value <- avg_p_vals$avg_lbq_test_p_value
+  avg_t_test_p_value <- avg_p_vals$avg_t_test_p_value
+
+  # Add the new values to the last line
+  last_line <- lines[length(lines)]
+  new_line <- paste(last_line, avg_sw_p_value, avg_lbq_test_p_value, avg_t_test_p_value, avg_validation_score, sep = ",")
+
+  # Replace the last line with the new line
+  lines[length(lines)] <- new_line
+
+  # Write the lines back to the file
+  writeLines(lines, output_file_path)
 }
 # Run the analysis
 
@@ -445,9 +466,6 @@ run_parallel_processing <- function(num_iters_csv) {
 }
 
 
-
-
-
 # Function for sequential processing
 run_sequential_processing <- function(num_iters_csv, MAX_P, MAX_D, MAX_Q, NUM_OBSERVATIONS) {
   order_comparison <- list()
@@ -474,10 +492,12 @@ run_processing <- function(use_parallel_processing, num_iters_csv, MAX_P, MAX_D,
   }
 }
 
-
-
-num_iters_csv <- 3
-
+num_iters_csv <- NUM_TEST_MODELS
 order_comparison <- run_processing(use_parallel_processing = FALSE, num_iters_csv, MAX_P, MAX_D, MAX_Q, NUM_OBSERVATIONS)
+
 avg_p_vals <- average_p_values(order_comparison)
 avg_validation_score <- calc_avg_validation_auto_arima(order_comparison)
+
+# Read the file as a vector of lines
+output_file_path <- OUTPUT_PATH
+append_to_file(avg_p_vals, avg_validation_score, output_file_path)
