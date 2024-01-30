@@ -31,6 +31,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\Week 1+\output_5_non_zero_d.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
       </map>
     </option>
   </component>

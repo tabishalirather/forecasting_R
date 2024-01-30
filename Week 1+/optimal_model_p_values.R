@@ -6,9 +6,9 @@ rm(list = ls())
 NUM_OBSERVATIONS <- 300
 MAX_P <- 5
 MAX_Q <- 5
-MAX_D <- 0
-OUTPUT_PATH <- "C:/Users/tabis/OneDrive - Swinburne University/Summer Project 2023/TestingR/Week 1+/output_4.csv"
-NUM_TEST_MODELS <- 15
+MAX_D <- 1
+OUTPUT_PATH <- "C:/Users/tabis/OneDrive - Swinburne University/Summer Project 2023/TestingR/Week 1+/output_5_non_zero_d.csv"
+NUM_TEST_MODELS <- 10
 # Fxn to geneate random ARIMA data and model
 generate_random_arima <- function(max_p, max_d, max_q, num_observations, seed = NULL)
 {
@@ -22,7 +22,7 @@ generate_random_arima <- function(max_p, max_d, max_q, num_observations, seed = 
   {
     p <- sample(0:max_p, 1)
     # d <- sample(0:max_d, 1)
-    d <- 0
+    d <- max_d
     q <- sample(0:max_q, 1)
     # Generate random AR and MA coefficients
     ar_coefs <- if(p > 0)
@@ -62,15 +62,16 @@ generate_random_arima <- function(max_p, max_d, max_q, num_observations, seed = 
 
 # Fxn to fit ARIMA models
 fit_arima_models <- function(random_arima_data, max_p, max_q) {
+  d <- MAX_D
   if(MAX_D == 0){
     do_include_constant <- TRUE
   }else{
     do_include_constant <- FALSE
   }
-  model_list <- list()
+  model_list <<- list()
   for (p in 0:max_p) {
     for (q in 0:max_q) {
-      model_list[[paste0("ARIMA_", p, "_0_", q)]] <- Arima(random_arima_data, order = c(p, 0, q), include.constant = do_include_constant)
+      model_list[[paste0("ARIMA_", p, "_0_", q)]] <<- Arima(random_arima_data, order = c(p, d, q), include.constant = do_include_constant)
     }
   }
   return(model_list)
@@ -186,15 +187,15 @@ refit_least_p_model <- function (order_comparison) {
     # print(paste("original_q in least p is: ", original_q))
 
     adjusted_p <- original_p - sum(overfit_coeffs_least_p %in% paste0("ar", 1:original_p))
-    # print(paste("adjusted_p in least p is: ", adjusted_p))
+    print(paste("adjusted_p in least p is: ", adjusted_p))
     adjusted_q <- original_q - sum(overfit_coeffs_least_p %in% paste0("ma", 1:original_q))
-    # print(paste("adjusted_q in least p is: ", adjusted_q))
+    print(paste("adjusted_q in least p is: ", adjusted_q))
 
     exclude_intercept <- "intercept" %in% overfit_coeffs_least_p
-
+    print(paste("exclude_intercept in least p is: ", exclude_intercept))
     current_data <- order_comparison[[i]]$data
 
-    refitted_model <- Arima(current_data, order=c(adjusted_p, 0, adjusted_q), include.mean=!exclude_intercept)
+    refitted_model <- Arima(current_data, order=c(adjusted_p, MAX_D, adjusted_q), include.mean=!exclude_intercept)
     # print(paste("refitted_model is: ", refitted_model))
     new_rmse_vals[[i]] <- perform_ts_cross_validation(current_data, refitted_model)[[2]]
     refitted_model_analysis_least_p[[i]] <- analyse_significant_parameters(refitted_model)
@@ -223,9 +224,9 @@ refit_auto_arima_model <- function (order_comparison) {
 
     current_data <- order_comparison[[i]]$data
     # print(paste("c(adjusted_p, 0, adjusted_q) ", c(adjusted_p, 0, adjusted_q)))
-    # print(paste("adjusted_p ", p))
-    # print(paste("adjusted_q ", q))
-    refitted_model_auto_arima <- Arima(current_data, order=c(p, 0, q), include.mean=!exclude_intercept)
+    print(paste("adjusted_p ", p))
+    print(paste("adjusted_q ", q))
+    refitted_model_auto_arima <- Arima(current_data, order=c(p, MAX_D, q), include.mean=!exclude_intercept)
     new_rmse_vals[[i]] <- perform_ts_cross_validation(current_data, refitted_model_auto_arima)[[2]]
     refitted_model_analysis_auto_arima[[i]] <- analyse_significant_parameters(refitted_model_auto_arima)
 

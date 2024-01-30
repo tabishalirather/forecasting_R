@@ -2,7 +2,7 @@ library(dplyr)
 library(ggplot2)
 rm(list = ls())
 
-data <- read.csv("Week 1+/output_4.csv")
+data <- read.csv("Week 1+/output_5_non_zero_d.csv")
 # Convert columns to numeric
 data$auto_arima_true_count <- as.numeric(as.character(data$auto_arima_true_count))
 data$auto_arima_false_count <- as.numeric(as.character(data$auto_arima_false_count))
