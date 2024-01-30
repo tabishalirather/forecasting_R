@@ -34,13 +34,13 @@ data$avg_validation_score <- as.numeric(as.character(data$avg_validation_score))
 
 
 # summary(data)
-true_false_counts <- data.frame(
-  Model = c("auto_arima", "max_p"),
-  True_Count = c(mean(data$auto_arima_true_count), mean(data$least_p_true_count)),
-  False_Count = c(mean(data$auto_arima_false_count), mean(data$least_p_false_count))
-)
+# true_false_counts <- data.frame(
+#   Model = c("auto_arima", "max_p"),
+#   True_Count = c(mean(data$auto_arima_true_count), mean(data$least_p_true_count)),
+#   False_Count = c(mean(data$auto_arima_false_count), mean(data$least_p_false_count))
+# )
 
-print(true_false_counts)
+# print(true_false_counts)
 # Average True Counts for each model
 avg_true_auto_arima <- mean(data$auto_arima_true_count, na.rm = TRUE)
 avg_true_least_p <- mean(data$least_p_true_count, na.rm = TRUE)
@@ -63,151 +63,92 @@ avg_insig_params_least_p <- mean(data$avg_insig_params_least_p_model, na.rm = TR
 refit_avg_insig_params_auto_arima <- mean(data$refit_avg_insig_params_auto_arima_model, na.rm = TRUE)
 refit_avg_insig_params_least_p <- mean(data$refit_avg_insig_params_least_p_model , na.rm = TRUE)
 
-counts_df <- data.frame(
-  Model = rep(c("auto_arima", "max_p"), each = 2),
-  Count_Type = rep(c("True Count", "False Count"), 2),
-  Count = c(avg_true_auto_arima, avg_false_auto_arima, avg_true_least_p, avg_false_least_p)
-)
+# Function for the first plot
+plot_true_vs_false_counts <- function(data) {
+  counts_df <- data.frame(
+    Model = rep(c("auto_arima", "max_p"), each = 2),
+    Count_Type = rep(c("True Count", "False Count"), 2),
+    Count = c(mean(data$auto_arima_true_count, na.rm = TRUE), mean(data$auto_arima_false_count, na.rm = TRUE), mean(data$least_p_true_count, na.rm = TRUE), mean(data$least_p_false_count, na.rm = TRUE))
+  )
 
-ggplot(counts_df, aes(x = Model, y = Count, fill = Count_Type)) +
-  geom_bar(stat = "identity", position = position_dodge()) +
-  labs(x = "Model", y = "Count", title = "True vs False Counts for Each Model") +
-  scale_fill_brewer(palette = "Set1")
+  p <- ggplot(counts_df, aes(x = Model, y = Count, fill = Count_Type)) +
+    geom_bar(stat = "identity", position = position_dodge()) +
+    labs(x = "Model", y = "Count", title = "True vs False Counts for Each Model") +
+    scale_fill_brewer(palette = "Set1")
+  print(p)
+  return(counts_df)
+}
 
+# Function for the second plot
+plot_avg_rmse_comparison <- function(data) {
+  rmse_df <- data.frame(
+    Model = c("auto_arima", "max_p", 'refit_auto_arima', 'refit_max_p'),
+    Avg_RMSE = c(mean(data$avg_rmse_auto_arima_model, na.rm = TRUE), mean(data$avg_rmse_least_p_model_values, na.rm = TRUE), mean(data$refit_avg_rmse_auto_arima, na.rm = TRUE), mean(data$refit_avg_rmse_least_p_model, na.rm = TRUE))
+  )
 
-# Prepare data for plotting
-rmse_df <- data.frame(
-  Model = c("auto_arima", "max_p", 'refit_auto_arima', 'refit_max_p'),
-  Avg_RMSE = c(avg_rmse_auto_arima, avg_rmse_least_p, refit_avg_rmse_auto_arima, refit_avg_rmse_least_p)
-)
-print(rmse_df)
-# Plot
-ggplot(rmse_df, aes(x = Model, y = Avg_RMSE, fill = Model)) +
-  geom_bar(stat = "identity", position = position_dodge()) +
-  labs(x = "Model", y = "Average RMSE", title = "Average RMSE Comparison Between Models")
+  p <- ggplot(rmse_df, aes(x = Model, y = Avg_RMSE, fill = Model)) +
+    geom_bar(stat = "identity", position = position_dodge()) +
+    labs(x = "Model", y = "Average RMSE", title = "Average RMSE Comparison Between Models")
+  print(p)
+  return(rmse_df)
+}
 
+# Function for the third plot
+plot_insig_params_comparison <- function(data) {
+  insig_params_df <- data.frame(
+    Model = c("auto_arima", "max_p", "refit_auto_arima", "refit_max_p"),
+    Avg_Insignificant_Params = c(mean(data$avg_insig_params_auto_arima_model, na.rm = TRUE), mean(data$avg_insig_params_least_p_model, na.rm = TRUE), mean(data$refit_avg_insig_params_auto_arima_model, na.rm = TRUE), mean(data$refit_avg_insig_params_least_p_model, na.rm = TRUE))
+  )
 
-# Prepare data for plotting
-insig_params_df <- data.frame(
-  Model = c("auto_arima", "max_p", "refit_auto_arima", "refit_max_p"),
-  Avg_Insignificant_Params = c(avg_insig_params_auto_arima, avg_insig_params_least_p, refit_avg_insig_params_auto_arima, refit_avg_insig_params_least_p)
-)
-print(insig_params_df)
+  p <- ggplot(insig_params_df, aes(x = Model, y = Avg_Insignificant_Params, fill = Model)) +
+    geom_bar(stat = "identity", position = position_dodge()) +
+    labs(x = "Model", y = "Average Number of Insignificant Parameters", title = "Insignificant Parameters Comparison")
+  print(p)
+  return(insig_params_df)
+}
 
-# Plot
-ggplot(insig_params_df, aes(x = Model, y = Avg_Insignificant_Params, fill = Model)) +
-  geom_bar(stat = "identity", position = position_dodge()) +
-  labs(x = "Model", y = "Average Number of Insignificant Parameters", title = "Insignificant Parameters Comparison")
+# Function for the fourth plot
+plot_histogram_avg_rmse <- function(data) {
+  p <- ggplot(data, aes(x = avg_rmse_auto_arima_model)) +
+    geom_histogram(fill = "blue", color = "black", alpha = 0.4) +
+    labs(x = "Average RMSE (auto_arima)", y = "Density", title = "Histogram of Average RMSE for auto_arima Model") +
+    xlim(min(data$avg_rmse_auto_arima_model, na.rm = TRUE)-0.2, max(data$avg_rmse_auto_arima_model, na.rm = TRUE)+0.2) +
+    theme_minimal() +
+    theme(legend.position = "none")
+  print(p)
+}
 
+# Function for the fifth plot
+plot_histogram_avg_p_values <- function(data) {
+  p <- ggplot(data, aes(x = avg_sw_p_value)) +
+    geom_histogram(binwidth = 0.01, fill = "blue", color = "black", alpha = 0.5) +
+    labs(x = "Average SW P-Value", y = "Frequency", title = "Histogram of Average SW P-Values") +
+    theme_minimal()
+  print(p)
+}
 
-# histogram plot
-# Histogram for avg_rmse_auto_arima_model
-	ggplot(data, aes(x = avg_rmse_auto_arima_model)) +
-  geom_histogram(fill = "blue", color = "black", alpha = 0.4) +
-  labs(x = "Average RMSE (auto_arima)", y = "Density", title = "Histogram of Average RMSE for auto_arima Model") +
-  xlim(min(data$avg_rmse_auto_arima_model)-0.2, max(data$avg_rmse_auto_arima_model)+0.2) +
-  theme_minimal() +
-  theme(legend.position = "none")
+# Function for the sixth plot
+plot_avg_validation_score <- function(data) {
+  data$avg_validation_score_percent <- data$avg_validation_score * 100
+  data$mean_avg_validation_score <- mean(data$avg_validation_score, na.rm = TRUE)
 
-ggplot(data, aes(x = refit_avg_rmse_least_p_model)) +
-  geom_histogram(fill = "blue", color = "black", alpha = 0.4) +
-  labs(x = "Average RMSE (refit_least_p)", y = "Density", title = "Histogram of Average RMSE for refit least p model") +
-  xlim(min(data$refit_avg_rmse_least_p_model)-0.2, max(data$refit_avg_rmse_least_p_model)+0.2) +
-  theme_minimal() +
-  theme(legend.position = "none")
+  p <- ggplot(data, aes(x = as.factor(row.names(data)), y = avg_validation_score_percent)) +
+    geom_bar(stat = "identity", fill = "purple") +
+    geom_hline(yintercept = data$mean_avg_validation_score * 100, color = "red", linetype = "dashed") +
+    labs(x = "Test number", y = "Average % of validated models (%)", title = "Average number of validated models as a Percentage for Each Test") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+  print(p)
+  return(data$mean_avg_validation_score)
+}
 
-# Histograms for p-values
-ggplot(data, aes(x = avg_sw_p_value)) +
-  geom_histogram(binwidth = 0.01, fill = "blue", color = "black", alpha = 0.5) +
-  labs(x = "Average SW P-Value", y = "Frequency", title = "Histogram of Average SW P-Values") +
-  theme_minimal()
-
-ggplot(data, aes(x = avg_lbq_p_value)) +
-  geom_histogram(binwidth = 0.01, fill = "red", color = "black", alpha = 0.5) +
-  labs(x = "Average LBQ P-Value", y = "Frequency", title = "Histogram of Average LBQ P-Values") +
-  theme_minimal()
-
-ggplot(data, aes(x = avg_t_test_p_value)) +
-  geom_histogram(binwidth = 0.01, fill = "green", color = "black", alpha = 0.5) +
-  labs(x = "Average T-Test P-Value", y = "Frequency", title = "Histogram of Average T-Test P-Values") +
-  theme_minimal()
-
-# Bar plot for average validation score
-data$avg_validation_score_percent <- data$avg_validation_score * 100
-# print(data$avg_validation_score)
-# ggplot(data, aes(x = as.factor(row.names(data)), y = avg_validation_score_percent)) +
-#   geom_bar(stat = "identity", fill = "purple") +
-#   labs(x = "Test number", y = "Average % of validadted models (%)", title = "Average number of validated models as a Percentage for Each Test") +
-#   theme_minimal() +
-#   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
-
-data$mean_avg_validation_score <- mean(data$avg_validation_score, na.rm = TRUE)
-ggplot(data, aes(x = as.factor(row.names(data)), y = avg_validation_score_percent)) +
-  geom_bar(stat = "identity", fill = "purple") +
-  geom_hline(yintercept = data$mean_avg_validation_score * 100, color = "red", linetype = "dashed") +
-  labs(x = "Test number", y = "Average % of validadted models (%)", title = "Average number of validated models as a Percentage for Each Test") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
-
-# Calculate IQR
-# Q1 <- quantile(data$refit_avg_rmse_least_p_model, 0.25)
-# Q3 <- quantile(data$refit_avg_rmse_least_p_model, 0.75)
-# IQR <- Q3 - Q1
-#
-# # Define bounds
-# lower_bound <- Q1 - 1.5 * IQR
-# upper_bound <- Q3 + 1.5 * IQR
-#
-# # Extract outliers
-# outliers <- data$refit_avg_rmse_least_p_model[data$refit_avg_rmse_least_p_model < lower_bound | data$refit_avg_rmse_least_p_model > upper_bound]
-#
-# # Print outliers
-# outliers
-#
-# # Calculate IQR for avg_rmse_auto_arima_model
-# Q1_auto_arima <- quantile(data$avg_rmse_auto_arima_model, 0.25)
-# Q3_auto_arima <- quantile(data$avg_rmse_auto_arima_model, 0.75)
-# IQR_auto_arima <- Q3_auto_arima - Q1_auto_arima
-#
-# # Define bounds for outliers
-# lower_bound_auto_arima <- Q1_auto_arima - 1.5 * IQR_auto_arima
-# upper_bound_auto_arima <- Q3_auto_arima + 1.5 * IQR_auto_arima
-#
-# # Extract outliers for avg_rmse_auto_arima_model
-# outliers_auto_arima <- data$avg_rmse_auto_arima_model[data$avg_rmse_auto_arima_model < lower_bound_auto_arima | data$avg_rmse_auto_arima_model > upper_bound_auto_arima]
-#
-# # Print outliers for avg_rmse_auto_arima_model
-# outliers_auto_arima
-
-#
-# ggplot(data) +
-#   geom_histogram(aes(x = avg_rmse_auto_arima_model), binwidth = 0.05, fill = "blue", alpha = 0.5) +
-#   geom_histogram(aes(x = avg_rmse_least_p_model_values), binwidth = 0.05, fill = "red", alpha = 0.5) +
-#   labs(x = "Average Number of Insignificant Parameters", y = "Frequency",
-#        title = "Overlay of Histograms for avg_rmse_least_p and avg_rmse_auto_arima_model") +
-#   theme_minimal()
-
-
-
-
-# Histogram for the average number of insignificant parameters
-# ggplot(data, aes(x = avg_insig_params_auto_arima_model)) +
-#   geom_histogram(binwidth = 0.1, fill = "blue", color = "black") +
-#   labs(x = "Average Number of Insignificant Parameters for auto arima", y = "Frequency",
-#        title = "Distribution of Average Number of Insignificant Parameters") +
-#   theme_minimal()
-
-
-# Histogram for the average number of insignificant parameters
-# ggplot(data, aes(x = avg_insig_params_least_p_model)) +
-#   geom_histogram(binwidth = 0.07, fill = "blue", color = "black") +
-#   labs(x = "Average Number of Insignificant Parameters for least p", y = "Frequency",
-#        title = "Distribution of Average Number of Insignificant Parameters") +
-#   theme_minimal()
-#
-# ggplot(data) +
-#   geom_histogram(aes(x = avg_insig_params_least_p_model), binwidth = 0.095, fill = "blue", alpha = 0.5) +
-#   geom_histogram(aes(x = avg_insig_params_auto_arima_model), binwidth = 0.095, fill = "red", alpha = 0.5) +
-#   labs(x = "Average Number of Insignificant Parameters ", y = "Frequency",
-#        title = "Overlay of Histograms for avg_insig_params_least_p_model and avg_insig_params_auto_arima_model") +
-#   theme_minimal()
+count_df <- plot_true_vs_false_counts(data)
+# print(count_df)
+rmse_df <- plot_avg_rmse_comparison(data)
+# print(rmse_df)
+insig_params_df <- plot_insig_params_comparison(data)
+# print(insig_params_df)
+# plot_histogram_avg_rmse(data)
+# plot_histogram_avg_p_values(data)
+mean_avg_val_score <- plot_avg_validation_score(data)
+# print(mean_avg_val_score)

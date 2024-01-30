@@ -17,4 +17,4 @@ run_r_script <- function(script_path, times) {
 script_path <- "C:/Users/tabis/OneDrive - Swinburne University/Summer Project 2023/TestingR/Week 1+/optimal_model_p_values.R"
 
 # Run the main R script 10 times
-run_r_script(script_path, 2)
+run_r_script(script_path, 15)

@@ -8,7 +8,7 @@ MAX_P <- 5
 MAX_Q <- 5
 MAX_D <- 1
 OUTPUT_PATH <- "C:/Users/tabis/OneDrive - Swinburne University/Summer Project 2023/TestingR/Week 1+/output_5_non_zero_d.csv"
-NUM_TEST_MODELS <- 10
+NUM_TEST_MODELS <- 20
 # Fxn to geneate random ARIMA data and model
 generate_random_arima <- function(max_p, max_d, max_q, num_observations, seed = NULL)
 {
